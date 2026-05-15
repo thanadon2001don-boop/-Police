@@ -626,7 +626,7 @@
         // 1. นำเข้าเครื่องมือ setDoc และ onSnapshot (สำหรับทำระบบล็อกอินซ้อน)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, enableIndexedDbPersistence, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAbdf78FUV58UXzTJrbB-7ZedxJs3Yrleg",
@@ -641,10 +641,6 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        enableIndexedDbPersistence(db).catch((err) => {
-            if (err.code == 'failed-precondition') console.warn('เปิดโหมดออฟไลน์ได้แค่แท็บเดียวเท่านั้น');
-        });
-        
         window.firebaseDB = db; window.firebaseAddDoc = addDoc; window.firebaseCollection = collection;
         window.firebaseServerTimestamp = serverTimestamp; window.firebaseQuery = query; window.firebaseWhere = where;
         window.firebaseGetDocs = getDocs; window.firebaseOrderBy = orderBy; window.firebaseDoc = doc; window.firebaseGetDoc = getDoc;
