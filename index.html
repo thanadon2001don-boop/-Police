@@ -670,6 +670,11 @@
                 }
                 
                 await window.loadHistoryFromFirebase(user.email);
+
+                // 🚀 เพิ่มใหม่: แอบโหลดจำนวนชุดข้อสอบมารอไว้ล่วงหน้าทันทีที่ล็อกอินเสร็จ
+                window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB, "system_settings", "exam_counts"))
+                    .then(snap => { if(snap.exists()) window.systemExamCounts = snap.data(); });
+
             } else {
                 document.getElementById('loginOverlay').style.display = 'flex';
                 document.getElementById('appContent').style.display = 'none';
@@ -777,7 +782,8 @@
                 document.getElementById('customModal').style.display = 'flex'; setTimeout(() => { document.getElementById('customModal').classList.add('show'); }, 10);
             }
 
-            // --- 4. แก้ปัญหาโหลดช้า: ใช้โหมดดึง "ป้ายจำนวน" เพียงครั้งเดียว --- //
+            window.systemExamCounts = null; // ตัวแปรสำหรับจำข้อมูลชั่วคราว
+
             async function showTestSelection(branchName) {
                 currentBranch = branchName; 
                 document.getElementById('mainMenu').style.display = 'none'; 
@@ -787,41 +793,52 @@
                 
                 const grid = document.getElementById('testGrid'); 
                 
+                // 🚀 เทคนิคที่ 1: ถ้าดึงข้อมูลมารอไว้แล้ว ให้เสกปุ่มโชว์ทันที (0.01 วินาที)
+                if (window.systemExamCounts && window.systemExamCounts[branchName] !== undefined) {
+                    renderTestButtons(branchName, window.systemExamCounts[branchName], grid);
+                    return;
+                }
+
+                // 🚀 เทคนิคที่ 2: ถ้าเน็ตช้า โหลดล่วงหน้าไม่ทัน ค่อยวิ่งไปถามฐานข้อมูล
                 grid.innerHTML = '<div style="width: 100%; text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 40px 0; font-weight: bold;">กำลังดึงข้อมูลชุดข้อสอบ...</div>';
 
                 try {
-                    let totalSets = 0;
-                    // ดึงป้ายตั้งค่าจาก Firebase เพียง 1 ครั้ง
                     const docRef = window.firebaseDoc(window.firebaseDB, "system_settings", "exam_counts");
                     const docSnap = await window.firebaseGetDoc(docRef);
 
-                    if (docSnap.exists() && docSnap.data()[branchName]) {
-                        totalSets = parseInt(docSnap.data()[branchName]);
+                    if (docSnap.exists()) {
+                        window.systemExamCounts = docSnap.data(); // เก็บเข้าสมองไว้ใช้รอบหน้า
+                        renderTestButtons(branchName, window.systemExamCounts[branchName], grid);
+                    } else {
+                        renderTestButtons(branchName, 0, grid);
                     }
-
-                    grid.innerHTML = '';
-                    
-                    if (totalSets === 0 || isNaN(totalSets)) {
-                         grid.innerHTML = '<div style="width: 100%; text-align: center; color: #991b1b; grid-column: 1 / -1; font-weight: bold; padding: 20px;">ยังไม่มีข้อสอบในหมวดหมู่นี้<br><span style="font-size:14px; color:var(--text-muted); font-weight:normal;">โปรดรอแอดมินอัปเดตจำนวนชุดข้อสอบในระบบ</span></div>';
-                         return;
-                    }
-
-                    // วาดปุ่มตามจำนวนทันที ไม่ต้องโหลดข้อสอบ (Lazy Loading) โหลดเร็วปรื๊ดแน่นอน
-                    for(let i = 1; i <= totalSets; i++) {
-                        let tName = 'ชุดที่ ' + i; 
-                        let isActive = (activeBranch === currentBranch && activeTestName === tName);
-                        
-                        grid.innerHTML += `
-                        <div class="test-card ${isActive ? 'in-progress' : ''}" onclick="enterExam('${tName}')">
-                            <div class="test-card-title">Test - ${tName}</div>
-                            <div class="test-card-meta">${isActive ? 'กำลังทำค้างไว้' : 'คลิกเพื่อเริ่มสอบ'}</div>
-                        </div>`;
-                    }
-                    
                 } catch (error) {
-                    console.error("โหลดข้อมูลชุดข้อสอบล้มเหลว:", error);
-                    grid.innerHTML = '<div style="width: 100%; text-align: center; color: #991b1b; grid-column: 1 / -1; font-weight: bold;">เกิดข้อผิดพลาดในการเชื่อมต่อ หรือตั้งค่าฐานข้อมูลไม่ถูกต้อง</div>';
+                    console.error("โหลดข้อมูลล้มเหลว:", error);
+                    grid.innerHTML = '<div style="width: 100%; text-align: center; color: #991b1b; grid-column: 1 / -1; font-weight: bold;">เครือข่ายไม่เสถียร กรุณากดย้อนกลับแล้วเข้าใหม่อีกครั้ง</div>';
                 }
+            }
+
+            // ฟังก์ชันช่วยวาดปุ่ม (แยกออกมาเพื่อให้โค้ดประมวลผลเร็วขึ้น)
+            function renderTestButtons(branchName, countValue, grid) {
+                let totalSets = parseInt(countValue || 0);
+                grid.innerHTML = '';
+                
+                if (totalSets === 0 || isNaN(totalSets)) {
+                     grid.innerHTML = '<div style="width: 100%; text-align: center; color: #991b1b; grid-column: 1 / -1; font-weight: bold; padding: 20px;">ยังไม่มีข้อสอบในหมวดหมู่นี้<br><span style="font-size:14px; color:var(--text-muted); font-weight:normal;">โปรดรอแอดมินอัปเดตจำนวนชุดข้อสอบในระบบ</span></div>';
+                     return;
+                }
+
+                let htmlContent = '';
+                for(let i = 1; i <= totalSets; i++) {
+                    let tName = 'ชุดที่ ' + i; 
+                    let isActive = (activeBranch === branchName && activeTestName === tName);
+                    htmlContent += `
+                    <div class="test-card ${isActive ? 'in-progress' : ''}" onclick="enterExam('${tName}')">
+                        <div class="test-card-title">Test - ${tName}</div>
+                        <div class="test-card-meta">${isActive ? 'กำลังทำค้างไว้' : 'คลิกเพื่อเริ่มสอบ'}</div>
+                    </div>`;
+                }
+                grid.innerHTML = htmlContent;
             }
 
             function backToMainMenuFromSelection() { document.getElementById('testSelectionMenu').style.display = 'none'; document.getElementById('mainMenu').style.display = 'flex'; document.getElementById('btnHistoryNav').style.display = 'flex'; }
