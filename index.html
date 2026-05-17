@@ -91,7 +91,7 @@
         .btn-logout:active { transform: translateY(4px); box-shadow: 0 0 0 #f87171, 0 2px 5px rgba(155, 44, 44, 0.1); }
 
         /* ---------------- Main Menu ---------------- */
-        #mainMenu { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; height: 100vh; padding: 160px 20px 0; overflow-y: auto; box-sizing: border-box;}
+        #mainMenu { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; flex: 1; height: 100%; padding: 160px 20px 0; overflow-y: auto; box-sizing: border-box;}
         
         .hero-section { margin-bottom: 50px; text-align: center; max-width: 800px; position: relative;}
         .menu-title { font-size: 46px; color: #0A192F; margin-bottom: 20px; font-weight: 900; letter-spacing: -1px; line-height: 1.2; text-shadow: 2px 2px 0 white, 4px 4px 10px rgba(10,25,47,0.1);}
@@ -116,7 +116,7 @@
         .branch-desc { font-size: 15px; color: var(--text-muted); line-height: 1.8; font-weight: 600;}
 
         /* ---------------- Test Selection (2D) ---------------- */
-        #testSelectionMenu { display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: 160px 20px 40px; height: 100vh; overflow-y: auto; box-sizing: border-box;}
+        #testSelectionMenu { display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: 160px 20px 40px; flex: 1; height: 100%; overflow-y: auto; box-sizing: border-box;}
         .test-selection-header { width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 3px solid var(--border-soft); padding-bottom: 20px;}
         .test-selection-title { font-size: 28px; font-weight: 900; color: #0A192F; margin: 0; display: flex; align-items: center; gap: 12px;}
         .test-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; width: 100%; max-width: 900px; box-sizing: border-box; }
@@ -128,7 +128,7 @@
         .test-card-meta { font-size: 14px; color: var(--text-muted); font-weight: 700;}
 
         /* ---------------- ประวัติการทดสอบ ---------------- */
-        #historyInterface { display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: 160px 20px 40px; height: 100vh; overflow-y: auto; box-sizing: border-box;}
+        #historyInterface { display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: 160px 20px 40px; flex: 1; height: 100%; overflow-y: auto; box-sizing: border-box;}
         .history-header { width: 100%; max-width: 850px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .history-title { font-size: 28px; font-weight: 900; color: #0A192F; margin: 0;}
         #historyContainer { width: 100%; max-width: 850px; display: flex; flex-direction: column; gap: 20px;}
@@ -296,7 +296,7 @@
             #mainMenu, #testSelectionMenu, #historyInterface { 
                 padding-top: 190px; /* เพิ่ม padding-top เพื่อหลบเมนูด้านบนที่หนาขึ้น */
                 padding-bottom: 40px;
-                height: 100dvh; 
+                /* ลบคำสั่ง height: 100dvh; ทิ้งไป เพื่อให้ระบบสืบทอดความยืดหยุ่นจาก Desktop อัตโนมัติ */
                 overflow-y: auto;
                 overflow-x: hidden;
                 -webkit-overflow-scrolling: touch; 
@@ -729,7 +729,7 @@
         });
 
         window.confirmLogout = () => { document.getElementById('logoutConfirmModal').style.display = 'flex'; setTimeout(() => { document.getElementById('logoutConfirmModal').classList.add('show'); }, 10); };
-        window.closeLogoutModal = () => { document.getElementById('logoutConfirmModal').classList.remove('show'); setTimeout(() => { document.getElementById('logoutConfirmModal').style.display = 'none'; }, 300); };
+        window.closeLogoutModal = () => { document.getElementById('logoutConfirmModal').classList.remove('show'); setTimeout(() => { document.getElementById('logoutConfirmModal').style.display = 'none'; }, 150); };
         
         window.executeLogout = () => { localStorage.removeItem('sessionToken'); document.getElementById('emailInput').value = ''; document.getElementById('passwordInput').value = ''; window.closeLogoutModal(); signOut(auth); };
     </script>
@@ -773,7 +773,7 @@
             function getNormalizedAnswer(r) { if(!r) return ''; let s=String(r).trim().toLowerCase(); if(s[0]==='ก'||s[0]==='a') return 'a'; if(s[0]==='ข'||s[0]==='b') return 'b'; if(s[0]==='ค'||s[0]==='c') return 'c'; if(s[0]==='ง'||s[0]==='d') return 'd'; return s; }
             function getFullChoiceText(q, l) { if(l==='a') return 'ก. '+sanitizeHTML(q.choiceA); if(l==='b') return 'ข. '+sanitizeHTML(q.choiceB); if(l==='c') return 'ค. '+sanitizeHTML(q.choiceC); if(l==='d') return 'ง. '+sanitizeHTML(q.choiceD); return l; }
 
-            window.closeModal = function() { document.getElementById('customModal').classList.remove('show'); setTimeout(() => { document.getElementById('customModal').style.display = 'none'; }, 300); }
+            window.closeModal = function() { document.getElementById('customModal').classList.remove('show'); setTimeout(() => { document.getElementById('customModal').style.display = 'none'; }, 150); }
             window.showConfirm = function(title, msg, btnText, btnClass, callback, showCancel=true) {
                 document.getElementById('modalTitle').innerText = title; document.getElementById('modalMessage').innerHTML = msg;
                 const btn = document.getElementById('modalBtnConfirm'); btn.innerHTML = btnText; btn.className = `modal-btn ${btnClass}`;
@@ -971,7 +971,7 @@
                 
                 const gridCell = document.getElementById(`grid-circle-${currentQIndex}`); if(gridCell) { gridCell.classList.add('answered'); gridCell.classList.remove('marked'); }
                 updateGridProgress(); const btnMark = document.getElementById('btnMark'); if(btnMark) { btnMark.classList.remove('marked'); btnMark.innerHTML = "ปักหมุดข้อนี้"; }
-                setTimeout(() => { if (currentQIndex < allQuestions.length - 1) jumpToQuestion(currentQIndex + 1); }, 300);
+                setTimeout(() => { if (currentQIndex < allQuestions.length - 1) jumpToQuestion(currentQIndex + 1); }, 150);
             };
 
             window.toggleMarkCurrentQ = function() {
@@ -1021,16 +1021,39 @@
                 finally { submitBtn.disabled = false; submitBtn.innerHTML = "💾 ส่งข้อสอบ (ประมวลผล)"; purgeEntireExamState(); }
             }
 
+            // --- ส่วนที่มีการอัปเดตระบบ Loading Placeholder สำหรับหน้าประวัติ ---
             window.loadHistoryFromFirebase = async function(email) {
-                try { const q = window.firebaseQuery(window.firebaseCollection(window.firebaseDB, "exam_history"), window.firebaseWhere("userEmail", "==", email)); const querySnapshot = await window.firebaseGetDocs(q); window.examHistoryLog = []; 
+                try { 
+                    // 🚀 โชว์สถานะ "กำลังโหลด" ทันทีที่ระบบวิ่งหา Firebase
+                    const container = document.getElementById('historyContainer');
+                    if(container) {
+                        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px 0; font-weight: bold;">กำลังโหลดประวัติการสอบจากคลาวด์...</div>';
+                    }
+                    
+                    const q = window.firebaseQuery(window.firebaseCollection(window.firebaseDB, "exam_history"), window.firebaseWhere("userEmail", "==", email)); 
+                    const querySnapshot = await window.firebaseGetDocs(q); 
+                    window.examHistoryLog = []; 
+                    
                     querySnapshot.forEach((doc) => { window.examHistoryLog.push(doc.data()); });
                     window.examHistoryLog.sort((a,b) => { let timeA = a.timestamp ? (a.timestamp.seconds || 0) : 0; let timeB = b.timestamp ? (b.timestamp.seconds || 0) : 0; return timeB - timeA; });
                     window.renderHistoryList();
-                } catch (e) { console.error("ดึงข้อมูลประวัติล้มเหลว:", e); }
+                } catch (e) { 
+                    console.error("ดึงข้อมูลประวัติล้มเหลว:", e); 
+                    const container = document.getElementById('historyContainer');
+                    if(container) container.innerHTML = '<div style="text-align: center; color: #991b1b; padding: 40px 0; font-weight: bold;">เชื่อมต่อล้มเหลว กรุณากดสลับหน้าใหม่อีกครั้ง</div>';
+                }
             };
 
+            // --- ส่วนที่มีการอัปเดตระบบ เช็คประวัติว่างเปล่า ---
             window.renderHistoryList = function() {
                 const container = document.getElementById('historyContainer'); container.innerHTML = '';
+                
+                // 🚀 ถ้าไม่มีประวัติ ให้แสดงข้อความบอกลูกค้าชัดเจน
+                if (!window.examHistoryLog || window.examHistoryLog.length === 0) {
+                    container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px 0; font-weight: bold;">ยังไม่มีประวัติการทำข้อสอบในระบบ</div>';
+                    return;
+                }
+                
                 window.examHistoryLog.forEach((record, index) => {
                     const payload = encodeURIComponent(JSON.stringify({ syllabus: record.syllabus, scores: record.subScores })); const targetPercent = record.passThreshold || getPassingThreshold(record.branch); const isPassText = record.isPass ? "ผ่านเกณฑ์" : "ไม่ผ่านเกณฑ์";
                     const html = `<div class="history-card"><div class="history-status-bar ${record.isPass?'green':'red'}"></div><div class="history-content"><div class="history-info"><h3>${sanitizeHTML(record.branch)}</h3><div class="history-test-name">Test - ${sanitizeHTML(record.testName)}</div><div class="history-date">${sanitizeHTML(record.date)}</div><div class="target-badge ${record.isPass?'':'fail'}">เป้าหมาย: ${targetPercent}% ขึ้นไป (${isPassText})</div></div><div class="history-action-area"><div class="history-score"><div class="score-circle ${record.isPass?'green':'red'}"><span class="score-percent">${record.percent}%</span></div><div class="score-raw">${record.totalScore}/${record.totalQuestions}</div></div><div class="btn-action-group"><button class="btn-view-solution" onclick="viewPastSolution(${index})">ดูเฉลย</button><button class="btn-download-slip" data-branch="${sanitizeHTML(record.branch)}" data-test="${sanitizeHTML(record.testName)}" data-date="${sanitizeHTML(record.date)}" data-score="${record.totalScore}" data-total="${record.totalQuestions}" data-percent="${record.percent}" data-status="${record.isPass?'ผ่าน':'ไม่ผ่าน'}" data-scoredata="${payload}" onclick="generateSlip(this)">📥 บันทึกผล</button></div></div></div></div>`;
@@ -1038,7 +1061,21 @@
                 });
             };
 
-            function showHistory() { document.getElementById('examInterface').style.display = 'none'; document.getElementById('testSelectionMenu').style.display = 'none'; document.getElementById('mainMenu').style.display = 'none'; document.getElementById('topNav').style.display = 'flex'; document.getElementById('historyInterface').style.display = 'flex'; document.getElementById('btnHistoryNav').style.display = 'none'; }
+            // --- ส่วนที่มีการอัปเดตระบบ บังคับหน้าประวัติให้รีเฟรชภาพข้อมูลทันทีเมื่อกดสลับแท็บ ---
+            function showHistory() { 
+                document.getElementById('examInterface').style.display = 'none'; 
+                document.getElementById('testSelectionMenu').style.display = 'none'; 
+                document.getElementById('mainMenu').style.display = 'none'; 
+                document.getElementById('topNav').style.display = 'flex'; 
+                document.getElementById('historyInterface').style.display = 'flex'; 
+                document.getElementById('btnHistoryNav').style.display = 'none'; 
+                
+                // 🚀 สั่งบังคับวาดหน้าจอจากหน่วยความจำทันที ป้องกันอาการโหลดเสร็จแต่ปุ่มไม่ขึ้น
+                if (typeof window.renderHistoryList === 'function') {
+                    window.renderHistoryList();
+                }
+            }
+            
             function backToMainMenuFromHistory() { document.getElementById('historyInterface').style.display = 'none'; document.getElementById('mainMenu').style.display = 'flex'; document.getElementById('btnHistoryNav').style.display = 'flex'; }
             
             function generateSlip(btn) {
@@ -1056,7 +1093,7 @@
                 reviewRecord.questions.forEach((q, i) => { const uAns = reviewRecord.userChoices[i]; const cor = getNormalizedAnswer(q.correctAnswer); const cell = document.getElementById(`grid-circle-${i}`); if(!uAns) cell.classList.add('review-incorrect'); else if(uAns === cor) cell.classList.add('review-correct'); else cell.classList.add('review-incorrect'); }); renderSingleQuestion(currentQIndex);
             };
 
-            function closePreview() { document.getElementById('previewModal').classList.remove('show'); setTimeout(()=>document.getElementById('previewModal').style.display='none',300); }
+            function closePreview() { document.getElementById('previewModal').classList.remove('show'); setTimeout(()=>document.getElementById('previewModal').style.display='none',150); }
 
             window.showTestSelection = showTestSelection; window.backToMainMenuFromSelection = backToMainMenuFromSelection; window.enterExam = enterExam; window.promptBackToMenu = promptBackToMenu; window.promptResetExam = promptResetExam; window.promptSubmitExam = promptSubmitExam; window.showHistory = showHistory; window.backToMainMenuFromHistory = backToMainMenuFromHistory; window.generateSlip = generateSlip; window.exitReviewMode = exitReviewMode; window.closePreview = closePreview; window.toggleMarkCurrentQ = toggleMarkCurrentQ; window.navPrevQ = navPrevQ; window.navNextQ = navNextQ; window.jumpToQuestion = jumpToQuestion; window.selectAnswer = selectAnswer;
         })();
