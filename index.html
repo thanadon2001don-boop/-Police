@@ -1034,26 +1034,34 @@
                 finally { submitBtn.disabled = false; submitBtn.innerHTML = "💾 ส่งข้อสอบ (ประมวลผล)"; purgeEntireExamState(); }
             }
 
-            // --- ส่วนที่มีการอัปเดตระบบ Loading Placeholder สำหรับหน้าประวัติ ---
+            // --- อัปเดตระบบ แก้ปัญหาประวัติหายเวลาเปิดทิ้งไว้นานๆ ---
             window.loadHistoryFromFirebase = async function(email) {
-                try { 
-                    // 🚀 โชว์สถานะ "กำลังโหลด" ทันทีที่ระบบวิ่งหา Firebase
-                    const container = document.getElementById('historyContainer');
-                    if(container) {
-                        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px 0; font-weight: bold;">กำลังโหลดประวัติการสอบจากคลาวด์...</div>';
+                try {
+                    // 1. ดึงข้อมูลใหม่จากคลาวด์ (โดยยังไม่ลบข้อมูลเก่าในหน้าจอทิ้ง)
+                    const q = window.firebaseQuery(window.firebaseCollection(window.firebaseDB, "exam_history"), window.firebaseWhere("userEmail", "==", email));
+                    const querySnapshot = await window.firebaseGetDocs(q);
+
+                    // 2. สร้างกล่องชั่วคราว (temp) มารองรับข้อมูลใหม่
+                    let tempHistoryLog = [];
+                    querySnapshot.forEach((doc) => { tempHistoryLog.push(doc.data()); });
+
+                    // 3. จัดเรียงข้อมูลจากใหม่ไปเก่า
+                    tempHistoryLog.sort((a,b) => {
+                        let timeA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
+                        let timeB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
+                        return timeB - timeA;
+                    });
+
+                    // 4. เมื่อโหลดสำเร็จและจัดเรียงเสร็จ ค่อยเอามาอัปเดตใส่ตัวแปรหลัก
+                    window.examHistoryLog = tempHistoryLog;
+
+                    // 5. สั่งรีเฟรชหน้าจอ (เฉพาะกรณีที่ผู้ใช้อยู่หน้าประวัติเท่านั้น เพื่อไม่ให้จอกระตุก)
+                    if (document.getElementById('historyInterface').style.display === 'flex') {
+                        window.renderHistoryList();
                     }
-                    
-                    const q = window.firebaseQuery(window.firebaseCollection(window.firebaseDB, "exam_history"), window.firebaseWhere("userEmail", "==", email)); 
-                    const querySnapshot = await window.firebaseGetDocs(q); 
-                    window.examHistoryLog = []; 
-                    
-                    querySnapshot.forEach((doc) => { window.examHistoryLog.push(doc.data()); });
-                    window.examHistoryLog.sort((a,b) => { let timeA = a.timestamp ? (a.timestamp.seconds || 0) : 0; let timeB = b.timestamp ? (b.timestamp.seconds || 0) : 0; return timeB - timeA; });
-                    window.renderHistoryList();
-                } catch (e) { 
-                    console.error("ดึงข้อมูลประวัติล้มเหลว:", e); 
-                    const container = document.getElementById('historyContainer');
-                    if(container) container.innerHTML = '<div style="text-align: center; color: #991b1b; padding: 40px 0; font-weight: bold;">เชื่อมต่อล้มเหลว กรุณากดสลับหน้าใหม่อีกครั้ง</div>';
+                } catch (e) {
+                    console.error("การดึงประวัติเบื้องหลังล้มเหลว (อาจเกิดจากเน็ตตัด/แท็บหลับ):", e);
+                    // ถ้าดึงไม่สำเร็จ ให้เงียบไว้ ระบบจะยังคงแสดงประวัติเก่าที่ค้างอยู่ในจอ ไม่ขึ้น Error กวนใจ
                 }
             };
 
