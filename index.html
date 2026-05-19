@@ -10,10 +10,10 @@
         /* ---------------- CSS Variables (Crimson Police Theme) ---------------- */
         :root {
             var(--police-navy): #0A192F;
-            --police-navy-light: #1A365D;
-            --police-crimson: #991b1b;
-            --police-crimson-dark: #7f1d1d;
-            --police-red: #9B2C2C;
+            var(--police-navy-light): #1A365D;
+            var(--police-crimson): #991b1b;
+            var(--police-crimson-dark): #7f1d1d;
+            var(--police-red): #9B2C2C;
             
             --text-main: #1e293b;
             --text-muted: #64748b;
@@ -210,6 +210,14 @@
         .question-subject-badge { font-size: 14px; color: white; font-weight: 800; background: #0A192F; padding: 8px 20px; border-radius: 100px; box-shadow: 0 4px 0 #0f172a;}
         .question-text { font-size: 20px; font-weight: 700; margin-bottom: 30px; line-height: 1.8; color: #0A192F; letter-spacing: 0.2px;}
 
+        /* ---------------- ป้องกันการคัดลอก (Anti-Copy) ---------------- */
+        .question-text, .choice-label {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
         /* ตัวเลือก ก.ข.ค.ง. (2D) */
         .choice-label { display: flex; align-items: flex-start; gap: 16px; padding: 18px 24px; background: #ffffff; margin-bottom: 14px; border-radius: 12px; cursor: pointer; border: 1px solid #cbd5e1; font-size: 16px; font-weight: 500; transition: all 0.2s ease; line-height: 1.6; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
         .choice-label:hover { border-color: #991b1b; background: #f8fafc; }
@@ -281,7 +289,7 @@
         #slipBox { width: 800px; padding: 40px; background: white; color: var(--text-main); font-family: 'Prompt', sans-serif; border-radius: 12px; border: 4px solid #0A192F; }
 
         /* ================= Responsive Mobile/iPad ================= */
-        @media (max-width: 900px) {
+        @media (max-width: 1024px) {
             .login-box { padding: 35px 25px; width: 90%; max-width: 350px; }
             
             /* แก้ไขปัญหาเมนูบน */
@@ -402,6 +410,10 @@
 </head>
 <body>
 
+    <div id="initialLoader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 9999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.3s ease;">
+        <div class="spinner" style="border-top-color: #991b1b; border-color: rgba(153, 27, 27, 0.2); width: 45px; height: 45px; border-width: 4px;"></div>
+        <div style="margin-top: 20px; color: #0A192F; font-size: 16px; font-weight: 800; font-family: 'Prompt';">กำลังตรวจสอบข้อมูลผู้ใช้งาน...</div>
+    </div>
     <div id="toastContainer"></div>
 
     <div id="loginOverlay">
@@ -576,7 +588,7 @@
                     <thead style="background: #0A192F; color: white;">
                         <tr id="slipHeaderRow"></tr>
                     </thead>
-                    <tbody>
+                    <tbody style="background: #0A192F;">
                         <tr id="slipDataRow"></tr>
                     </tbody>
                 </table>
@@ -623,7 +635,6 @@
     </div>
 
     <script type="module">
-        // 1. นำเข้าเครื่องมือ setDoc และ onSnapshot (สำหรับทำระบบล็อกอินซ้อน)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
@@ -646,19 +657,16 @@
         window.firebaseGetDocs = getDocs; window.firebaseOrderBy = orderBy; window.firebaseDoc = doc; window.firebaseGetDoc = getDoc;
         window.firebaseSetDoc = setDoc; window.firebaseOnSnapshot = onSnapshot;
 
-        let unsubscribeSession = null; // ตัวแปรเก็บฟังก์ชันหยุดสอดส่อง Session
+        let unsubscribeSession = null; 
 
-        // 🚀 1. สร้างฟังก์ชัน "เปิดเรดาร์" แยกออกมา เพื่อให้เรียกใช้ได้ตรงจุดทั้งตอนรีเฟรชจอและตอนล็อกอินใหม่
         function startSessionRadar(email, tokenToTrack) {
-            if (unsubscribeSession) { unsubscribeSession(); } // ปิดของเก่าทิ้งก่อน
+            if (unsubscribeSession) { unsubscribeSession(); } 
             
-            // เริ่มสอดส่องโฟลเดอร์ user_sessions
             unsubscribeSession = window.firebaseOnSnapshot(window.firebaseDoc(window.firebaseDB, "user_sessions", email), (docSnap) => {
-                // ถ้ามีคนมาล็อกอินซ้อน Token ในระบบจะเปลี่ยนไป ทำให้ไม่ตรงกับ tokenToTrack ของเครื่องนี้
                 if (docSnap.exists() && docSnap.data().token !== tokenToTrack) {
                     window.showConfirm('ตรวจพบการใช้งานซ้อน', 'บัญชีนี้ถูกเข้าสู่ระบบจากอุปกรณ์อื่น<br>ระบบจะทำการออกจากระบบโดยอัตโนมัติ', 'ตกลง', 'modal-btn-confirm', () => {
                         window.executeLogout();
-                    }, false); // ซ่อนปุ่มยกเลิก บังคับเตะออก
+                    }, false); 
                 }
             }, (error) => {
                 console.error("ระบบตรวจจับ Session มีปัญหา:", error);
@@ -669,29 +677,53 @@
             if (user) {
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('appContent').style.display = 'flex';
-                document.getElementById('navUserEmail').innerText = user.email;
-                document.getElementById('navUserAvatar').innerText = user.email.charAt(0).toUpperCase();
-                window.currentUserEmail = user.email; 
                 
-                // 2. ดักจับการล็อกอินซ้อน: ดึง token ประจำเครื่องออกมาเช็ค (กรณีลูกค้ารีเฟรชหน้าเว็บ)
+                // --- 🛠️ ส่วนที่ 1: แก้ไขบังคับอีเมลตัวพิมพ์เล็กและกู้ Cache (แก้ปัญหา F5 หน้าขาว) ---
+                const safeEmailForSystem = String(user.email).toLowerCase();
+                document.getElementById('navUserEmail').innerText = safeEmailForSystem;
+                document.getElementById('navUserAvatar').innerText = safeEmailForSystem.charAt(0).toUpperCase();
+                window.currentUserEmail = safeEmailForSystem; 
+                
+                // กู้คืนข้อมูลจาก Local Storage ทันทีที่โหลดหน้าจอ
+                const instantHistory = localStorage.getItem('examHistoryCache_' + safeEmailForSystem);
+                if(instantHistory) window.examHistoryLog = JSON.parse(instantHistory);
+
+                const instantCounts = localStorage.getItem('systemExamCountsCache');
+                if(instantCounts) window.systemExamCounts = JSON.parse(instantCounts);
+                // ----------------------------------------------------------------------
+                
                 const currentToken = localStorage.getItem('sessionToken');
                 if(currentToken) {
                     startSessionRadar(user.email, currentToken);
                 }
                 
-                await window.loadHistoryFromFirebase(user.email);
+                // ปล่อยให้ระบบวิ่งไปอัปเดตประวัติของใหม่เบื้องหลัง
+                await window.loadHistoryFromFirebase(safeEmailForSystem);
 
-                // แอบโหลดจำนวนชุดข้อสอบมารอไว้ล่วงหน้าทันทีที่ล็อกอินเสร็จ
+                // แอบโหลดจำนวนชุดข้อสอบมารอไว้ล่วงหน้า (และเก็บลง Cache)
                 window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB, "system_settings", "exam_counts"))
-                    .then(snap => { if(snap.exists()) window.systemExamCounts = snap.data(); });
+                    .then(snap => { 
+                        if(snap.exists()) {
+                            window.systemExamCounts = snap.data(); 
+                            localStorage.setItem('systemExamCountsCache', JSON.stringify(snap.data()));
+                        }
+                    });
 
             } else {
                 document.getElementById('loginOverlay').style.display = 'flex';
                 document.getElementById('appContent').style.display = 'none';
                 document.getElementById('emailInput').value = '';
                 document.getElementById('passwordInput').value = '';
-                if(unsubscribeSession) { unsubscribeSession(); unsubscribeSession = null; } // หยุดดักฟังเมื่อออกจากระบบ
+                if(unsubscribeSession) { unsubscribeSession(); unsubscribeSession = null; } 
             }
+
+            // 👇👇 เพิ่มคำสั่งซ่อน Loading เมื่อตรวจสอบเสร็จ 👇👇
+            const initialLoader = document.getElementById('initialLoader');
+            if (initialLoader) {
+                initialLoader.style.opacity = '0';
+                setTimeout(() => initialLoader.style.display = 'none', 300);
+            }
+            // 👆👆 สิ้นสุดคำสั่งซ่อน 👆👆
         });
 
         document.getElementById('btnLogin').addEventListener('click', () => {
@@ -707,17 +739,14 @@
 
             signInWithEmailAndPassword(auth, email, password)
                 .then(async () => { 
-                    // 3. ตอนล็อกอินสำเร็จ สร้าง Session Token ใหม่
                     const newToken = Math.random().toString(36).substring(2) + Date.now().toString(36);
-                    localStorage.setItem('sessionToken', newToken); // เก็บลงเครื่อง
+                    localStorage.setItem('sessionToken', newToken); 
                     
-                    // บันทึก Token นี้ลงโฟลเดอร์ user_sessions (คนเก่าจะถูกทับและเตะออกทันที)
                     await window.firebaseSetDoc(window.firebaseDoc(window.firebaseDB, "user_sessions", email), {
                         token: newToken,
                         updatedAt: window.firebaseServerTimestamp()
                     });
                     
-                    // 🚀 4. บังคับเปิดเรดาร์ทันทีที่ล็อกอินเสร็จ (แก้ปัญหาบั๊กตัวนี้ครับ)
                     startSessionRadar(email, newToken);
                     
                     btn.innerHTML = "เข้าสู่ระบบ"; 
@@ -795,8 +824,20 @@
                 document.getElementById('customModal').style.display = 'flex'; setTimeout(() => { document.getElementById('customModal').classList.add('show'); }, 10);
             }
 
-            window.systemExamCounts = null; // ตัวแปรสำหรับจำข้อมูลชั่วคราว
+            window.systemExamCounts = null; 
 
+            // ฟังก์ชันเซฟสถานะ Auto-Save
+            function saveExamState() {
+                if(isReviewMode || !activeTestName) return;
+                const state = {
+                    answers: userAnswers,
+                    marked: markedQuestions,
+                    timeLeft: totalSeconds
+                };
+                localStorage.setItem(`exam_state_${currentBranch}_${currentTestName}`, JSON.stringify(state));
+            }
+
+            // --- 🛠️ ส่วนที่ 2: อัปเกรดการโหลดเมนูเลือกชุดข้อสอบ (SWR Cache) ---
             async function showTestSelection(branchName) {
                 currentBranch = branchName; 
                 document.getElementById('mainMenu').style.display = 'none'; 
@@ -805,33 +846,41 @@
                 document.querySelector('.test-selection-title').innerHTML = `ชุดข้อสอบ: ${sanitizeHTML(branchName)}`;
                 
                 const grid = document.getElementById('testGrid'); 
-                
-                // 🚀 เทคนิคที่ 1: ถ้าดึงข้อมูลมารอไว้แล้ว ให้เสกปุ่มโชว์ทันที (0.01 วินาที)
-                if (window.systemExamCounts && window.systemExamCounts[branchName] !== undefined) {
+                const cacheKey = 'systemExamCountsCache';
+
+                // [STEP 1] เสิร์ฟข้อมูลจาก Cache ทันทีที่กด (แก้ปัญหาโหลดช้า)
+                const cachedCounts = localStorage.getItem(cacheKey);
+                if (cachedCounts) {
+                    window.systemExamCounts = JSON.parse(cachedCounts);
                     renderTestButtons(branchName, window.systemExamCounts[branchName], grid);
-                    return;
+                } else {
+                    grid.innerHTML = '<div style="width: 100%; text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 40px 0; font-weight: bold;">กำลังตรวจสอบชุดข้อสอบ...</div>';
                 }
 
-                // 🚀 เทคนิคที่ 2: ถ้าเน็ตช้า โหลดล่วงหน้าไม่ทัน ค่อยวิ่งไปถามฐานข้อมูล
-                grid.innerHTML = '<div style="width: 100%; text-align: center; color: var(--text-muted); grid-column: 1 / -1; padding: 40px 0; font-weight: bold;">กำลังดึงข้อมูลชุดข้อสอบ...</div>';
-
+                // [STEP 2] วิ่งไปอัปเดตจาก Firebase เบื้องหลัง
                 try {
                     const docRef = window.firebaseDoc(window.firebaseDB, "system_settings", "exam_counts");
                     const docSnap = await window.firebaseGetDoc(docRef);
 
                     if (docSnap.exists()) {
-                        window.systemExamCounts = docSnap.data(); // เก็บเข้าสมองไว้ใช้รอบหน้า
-                        renderTestButtons(branchName, window.systemExamCounts[branchName], grid);
-                    } else {
+                        const newData = docSnap.data();
+                        // ถ้าข้อมูลเปลี่ยน หรือยังไม่มี Cache ให้วาดหน้าจอใหม่
+                        if (JSON.stringify(newData) !== cachedCounts) {
+                            window.systemExamCounts = newData;
+                            localStorage.setItem(cacheKey, JSON.stringify(newData)); 
+                            renderTestButtons(branchName, window.systemExamCounts[branchName], grid);
+                        }
+                    } else if (!cachedCounts) {
                         renderTestButtons(branchName, 0, grid);
                     }
                 } catch (error) {
-                    console.error("โหลดข้อมูลล้มเหลว:", error);
-                    grid.innerHTML = '<div style="width: 100%; text-align: center; color: #991b1b; grid-column: 1 / -1; font-weight: bold;">เครือข่ายไม่เสถียร กรุณากดย้อนกลับแล้วเข้าใหม่อีกครั้ง</div>';
+                    console.error("อัปเดตชุดข้อสอบเบื้องหลังล้มเหลว", error);
+                    if (!cachedCounts) {
+                        grid.innerHTML = '<div style="width: 100%; text-align: center; color: #991b1b; grid-column: 1 / -1; font-weight: bold;">เครือข่ายไม่เสถียร กรุณาตรวจสอบอินเทอร์เน็ต</div>';
+                    }
                 }
             }
 
-            // ฟังก์ชันช่วยวาดปุ่ม (แยกออกมาเพื่อให้โค้ดประมวลผลเร็วขึ้น)
             function renderTestButtons(branchName, countValue, grid) {
                 let totalSets = parseInt(countValue || 0);
                 grid.innerHTML = '';
@@ -857,8 +906,10 @@
             function backToMainMenuFromSelection() { document.getElementById('testSelectionMenu').style.display = 'none'; document.getElementById('mainMenu').style.display = 'flex'; document.getElementById('btnHistoryNav').style.display = 'flex'; }
 
             function purgeEntireExamState() {
+                if (currentBranch && currentTestName) { localStorage.removeItem(`exam_state_${currentBranch}_${currentTestName}`); }
                 clearInterval(timerInterval); totalSeconds = 3 * 60 * 60; isTimerRunning = false; examSubmitted = false;
                 document.getElementById('timeDisplay').innerText = "03:00:00"; document.getElementById('timerBox').classList.remove('running');
+                document.getElementById('timerBox').style.animation = ""; // ล้างอนิเมชันเวลา
                 document.getElementById('timerStatus').innerText = "คลิกเลือกคำตอบข้อแรกเพื่อเริ่มจับเวลา"; document.getElementById('timerStatus').style.color = "#0A192F";
                 activeBranch = null; activeTestName = null; allQuestions = []; userAnswers = []; markedQuestions = [];
                 document.getElementById('singleQuestionContainer').innerHTML = ''; document.getElementById('smartGrid').innerHTML = '';
@@ -925,7 +976,21 @@
                 }
             }
 
-            function initExamData() { userAnswers = new Array(allQuestions.length).fill(null); markedQuestions = new Array(allQuestions.length).fill(false); buildSmartGrid(); currentQIndex = 0; renderSingleQuestion(currentQIndex); document.getElementById('qControls').style.display = 'flex'; }
+            function initExamData() { 
+                const savedState = localStorage.getItem(`exam_state_${currentBranch}_${currentTestName}`);
+                if (savedState) {
+                    const parsedState = JSON.parse(savedState);
+                    userAnswers = parsedState.answers;
+                    markedQuestions = parsedState.marked;
+                    totalSeconds = parsedState.timeLeft; 
+                    window.showToast("กู้คืนข้อมูลที่ทำค้างไว้สำเร็จ", "info");
+                } else {
+                    userAnswers = new Array(allQuestions.length).fill(null); 
+                    markedQuestions = new Array(allQuestions.length).fill(false);
+                    totalSeconds = 3 * 60 * 60;
+                }
+                buildSmartGrid(); currentQIndex = 0; renderSingleQuestion(currentQIndex); document.getElementById('qControls').style.display = 'flex'; 
+            }
 
             function buildSmartGrid() {
                 const grid = document.getElementById('smartGrid'); grid.innerHTML = ''; const fragment = document.createDocumentFragment(); const total = isReviewMode ? reviewRecord.questions.length : allQuestions.length;
@@ -984,6 +1049,9 @@
                 
                 const gridCell = document.getElementById(`grid-circle-${currentQIndex}`); if(gridCell) { gridCell.classList.add('answered'); gridCell.classList.remove('marked'); }
                 updateGridProgress(); const btnMark = document.getElementById('btnMark'); if(btnMark) { btnMark.classList.remove('marked'); btnMark.innerHTML = "ปักหมุดข้อนี้"; }
+                
+                saveExamState();
+                
                 setTimeout(() => { if (currentQIndex < allQuestions.length - 1) jumpToQuestion(currentQIndex + 1); }, 150);
             };
 
@@ -991,6 +1059,7 @@
                 markedQuestions[currentQIndex] = !markedQuestions[currentQIndex]; const btn = document.getElementById('btnMark'); const gridCell = document.getElementById(`grid-circle-${currentQIndex}`);
                 if(markedQuestions[currentQIndex]) { btn.classList.add('marked'); btn.innerHTML = "เลิกปักหมุด"; if(gridCell) gridCell.classList.add('marked'); window.showToast(`ปักหมุดข้อที่ ${currentQIndex + 1} แล้ว`, 'warning'); } 
                 else { btn.classList.remove('marked'); btn.innerHTML = "ปักหมุดข้อนี้"; if(gridCell) gridCell.classList.remove('marked'); }
+                saveExamState();
             };
 
             window.jumpToQuestion = function(index) { currentQIndex = index; renderSingleQuestion(index); }; window.navPrevQ = function() { if(currentQIndex > 0) jumpToQuestion(currentQIndex - 1); }; window.navNextQ = function() { const t = isReviewMode ? reviewRecord.questions.length : allQuestions.length; if(currentQIndex < t - 1) jumpToQuestion(currentQIndex + 1); };
@@ -999,11 +1068,22 @@
 
             function startTimer() {
                 if (isTimerRunning) return; isTimerRunning = true;
-                document.getElementById('timerBox').classList.add('running'); document.getElementById('timerStatus').innerText = "กำลังจับเวลา..."; document.getElementById('timerStatus').style.color = "#b91c1c";
+                const timerBox = document.getElementById('timerBox');
+                timerBox.classList.add('running'); document.getElementById('timerStatus').innerText = "กำลังจับเวลา..."; document.getElementById('timerStatus').style.color = "#b91c1c";
                 timerInterval = setInterval(() => {
                     if(totalSeconds <= 0) { clearInterval(timerInterval); processScoreAndShowHistory(); return; }
                     totalSeconds--; let h = Math.floor(totalSeconds/3600), m = Math.floor((totalSeconds%3600)/60), s = totalSeconds%60;
                     document.getElementById('timeDisplay').innerText = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                    
+                    // แจ้งเตือนเวลา 15 นาทีสุดท้าย
+                    if (totalSeconds === 900) {
+                        window.showToast("เหลือเวลาอีก 15 นาทีสุดท้าย!", "warning");
+                        timerBox.style.animation = "pulse 1s infinite"; 
+                    }
+                    
+                    // เซฟเวลาลงเครื่องทุกๆ 10 วินาที
+                    if (totalSeconds % 10 === 0) saveExamState();
+                    
                 }, 1000);
             }
 
@@ -1012,7 +1092,7 @@
                 else { window.showConfirm('ย้อนกลับ', 'ย้อนกลับไปหน้าเลือกชุดข้อสอบ', 'ตกลง', 'modal-btn-confirm', () => { purgeEntireExamState(); document.getElementById('examInterface').style.display = 'none'; showTestSelection(currentBranch); document.getElementById('topNav').style.display = 'flex'; }); }
             }
 
-            function promptResetExam() { window.showConfirm('เริ่มใหม่', 'ล้างคำตอบและเริ่มเวลาใหม่?', '🔄 ล้างข้อมูล', 'modal-btn-confirm', () => { userAnswers.fill(null); markedQuestions.fill(false); document.querySelectorAll('.q-circle').forEach(c => c.className = 'q-circle'); updateGridProgress(); clearInterval(timerInterval); totalSeconds = 3 * 60 * 60; isTimerRunning = false; examSubmitted = false; document.getElementById('timeDisplay').innerText = "03:00:00"; document.getElementById('timerBox').classList.remove('running'); document.getElementById('timerStatus').innerText = "คลิกเลือกเพื่อเริ่มใหม่"; document.getElementById('timerStatus').style.color = "#0A192F"; jumpToQuestion(0); window.showToast("ล้างข้อมูลการสอบเรียบร้อย", "info");}); }
+            function promptResetExam() { window.showConfirm('เริ่มใหม่', 'ล้างคำตอบและเริ่มเวลาใหม่?', '🔄 ล้างข้อมูล', 'modal-btn-confirm', () => { userAnswers.fill(null); markedQuestions.fill(false); document.querySelectorAll('.q-circle').forEach(c => c.className = 'q-circle'); updateGridProgress(); purgeEntireExamState(); startNewExamSession(currentTestName); window.showToast("ล้างข้อมูลการสอบเรียบร้อย", "info");}); }
 
             function promptSubmitExam() { 
                 const totalQ = allQuestions.length; if (totalQ === 0) return; const answeredCount = userAnswers.filter(a => a !== null).length;
@@ -1027,58 +1107,69 @@
                 allQuestions.forEach((q, i) => { let uChoice = userAnswers[i]; let cor = getNormalizedAnswer(q.correctAnswer); if(uChoice === cor) { total++; const subjInfo = getSubjectInfo(i); if(subScores[subjInfo.name] !== undefined) subScores[subjInfo.name]++; } });
                 const percent = Math.round((total/allQuestions.length)*100); const passThreshold = getPassingThreshold(currentBranch); const isPass = percent >= passThreshold; const dateStr = new Date().toLocaleString('th-TH');
 
-                const historyRecord = { userEmail: window.currentUserEmail, branch: currentBranch, testName: currentTestName, date: dateStr, questions: JSON.parse(JSON.stringify(allQuestions)), userChoices: userAnswers, totalScore: total, totalQuestions: allQuestions.length, percent: percent, isPass: isPass, passThreshold: passThreshold, syllabus: syllabus, subScores: subScores, timestamp: window.firebaseServerTimestamp() };
+                // --- 🛠️ ส่วนที่ 3: บังคับให้อีเมลเป็นพิมพ์เล็กเสมอตอนบันทึกผล ---
+                const safeEmail = String(window.currentUserEmail).toLowerCase();
+                const historyRecord = { userEmail: safeEmail, branch: currentBranch, testName: currentTestName, date: dateStr, questions: JSON.parse(JSON.stringify(allQuestions)), userChoices: userAnswers, totalScore: total, totalQuestions: allQuestions.length, percent: percent, isPass: isPass, passThreshold: passThreshold, syllabus: syllabus, subScores: subScores, timestamp: window.firebaseServerTimestamp() };
 
                 try { await window.firebaseAddDoc(window.firebaseCollection(window.firebaseDB, "exam_history"), historyRecord); window.examHistoryLog.unshift(historyRecord); window.renderHistoryList(); showHistory(); window.showToast("บันทึกผลสอบเรียบร้อย", "success");}
                 catch (error) { window.showConfirm('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'ตกลง', 'modal-btn-confirm', null, false); }
                 finally { submitBtn.disabled = false; submitBtn.innerHTML = "💾 ส่งข้อสอบ (ประมวลผล)"; purgeEntireExamState(); }
             }
 
-            // --- 1. ฟังก์ชันโหลดประวัติที่เสถียรที่สุด (ลบโค้ดซ้ำซ้อนออกแล้ว) ---
+            // --- 🛠️ ส่วนที่ 4: อัปเกรดฟังก์ชันโหลดประวัติ SWR Cache ---
             window.loadHistoryFromFirebase = async function(email) {
-                if (!email) return; // ป้องกันกรณีดึงข้อมูลตอนยังไม่ล็อกอิน
+                if (!email) return;
+                const safeEmail = String(email).toLowerCase(); // ล็อกอีเมลเป็นพิมพ์เล็ก
+                const cacheKey = 'examHistoryCache_' + safeEmail;
+
+                // [STEP 1] เสิร์ฟข้อมูลจาก Cache ในเครื่องก่อนทันที (ความเร็ว 0.01 วิ)
+                const cachedData = localStorage.getItem(cacheKey);
+                if (cachedData) {
+                    window.examHistoryLog = JSON.parse(cachedData);
+                    if (document.getElementById('historyInterface').style.display === 'flex') {
+                        window.renderHistoryList(); 
+                    }
+                }
+
+                // [STEP 2] แอบวิ่งไปเช็คข้อมูลใหม่จาก Firebase เบื้องหลัง
                 try {
-                    // ดึงข้อมูลจากคลาวด์
-                    const q = window.firebaseQuery(window.firebaseCollection(window.firebaseDB, "exam_history"), window.firebaseWhere("userEmail", "==", email));
+                    const q = window.firebaseQuery(window.firebaseCollection(window.firebaseDB, "exam_history"), window.firebaseWhere("userEmail", "==", safeEmail));
                     const querySnapshot = await window.firebaseGetDocs(q);
 
-                    // ใช้ถาดพักข้อมูล (ป้องกันข้อมูลเก่าหายระหว่างโหลด)
-                    let tempHistoryLog = [];
-                    querySnapshot.forEach((doc) => { tempHistoryLog.push(doc.data()); });
+                    let freshHistoryLog = [];
+                    querySnapshot.forEach((doc) => { freshHistoryLog.push(doc.data()); });
 
-                    // จัดเรียงข้อมูลจากใหม่ไปเก่า
-                    tempHistoryLog.sort((a,b) => {
+                    freshHistoryLog.sort((a,b) => {
                         let timeA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
                         let timeB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
                         return timeB - timeA;
                     });
 
-                    // อัปเดตใส่ตัวแปรหลักเฉพาะตอนดึงสำเร็จเท่านั้น (ไม่มีการล้างทิ้งมั่วซั่ว)
-                    window.examHistoryLog = tempHistoryLog;
-
-                    // ถ้ายืนอยู่หน้าประวัติ ให้รีเฟรชหน้าจอทันที
-                    if (document.getElementById('historyInterface').style.display === 'flex') {
-                        window.renderHistoryList();
+                    // ถ้าข้อมูลใหม่ไม่เหมือนของเก่า ให้อัปเดตและวาดหน้าจอใหม่
+                    if (JSON.stringify(freshHistoryLog) !== cachedData) {
+                        window.examHistoryLog = freshHistoryLog;
+                        localStorage.setItem(cacheKey, JSON.stringify(freshHistoryLog)); // อัปเดต Cache
+                        
+                        if (document.getElementById('historyInterface').style.display === 'flex') {
+                            window.renderHistoryList(); // รีเฟรชจอแบบเนียนๆ
+                        }
                     }
                 } catch (e) {
-                    console.error("ดึงประวัติเบื้องหลังล้มเหลว:", e);
+                    console.error("เชื่อมต่อฐานข้อมูลประวัติล้มเหลว โหลดจาก Cache แทน", e);
                 }
             };
 
-            // --- 2. ฟังก์ชันวาดหน้าจอ (ดึงข้อมูลมาจากตัวแปรหลักโดยตรง) ---
             window.renderHistoryList = function() {
                 const container = document.getElementById('historyContainer');
                 if (!container) return;
                 
-                container.innerHTML = ''; // ล้างแค่ภาพบนจอ ไม่ลบข้อมูลจริง
+                container.innerHTML = ''; 
 
-                // ถ้าไม่มีข้อมูล ให้ขึ้นข้อความแจ้งเตือน
                 if (!window.examHistoryLog || window.examHistoryLog.length === 0) {
-                    container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px 0; font-weight: bold;">ยังไม่มีประวัติการทำข้อสอบในระบบ</div>';
+                    container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px 0; font-weight: bold;">ยังไม่มีประวัติการทำข้อสอบในระบบ หรือกำลังรอโหลดข้อมูล...</div>';
                     return;
                 }
 
-                // วาดการ์ดประวัติตามข้อมูลที่มี
                 window.examHistoryLog.forEach((record, index) => {
                     const payload = encodeURIComponent(JSON.stringify({ syllabus: record.syllabus, scores: record.subScores })); 
                     const targetPercent = record.passThreshold || getPassingThreshold(record.branch); 
@@ -1096,7 +1187,6 @@
                 document.getElementById('historyInterface').style.display = 'flex'; 
                 document.getElementById('btnHistoryNav').style.display = 'none'; 
                 
-                // 🚀 สั่งบังคับวาดหน้าจอจากหน่วยความจำทันที ป้องกันอาการโหลดเสร็จแต่ปุ่มไม่ขึ้น
                 if (typeof window.renderHistoryList === 'function') {
                     window.renderHistoryList();
                 }
@@ -1120,6 +1210,15 @@
             };
 
             function closePreview() { document.getElementById('previewModal').classList.remove('show'); setTimeout(()=>document.getElementById('previewModal').style.display='none',150); }
+
+            // ระบบป้องกันการก๊อปปี้ (Anti-Copy)
+            document.addEventListener('contextmenu', event => event.preventDefault());
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C')) {
+                    e.preventDefault();
+                    window.showToast("ไม่อนุญาตให้คัดลอกข้อสอบครับ", "warning");
+                }
+            });
 
             window.showTestSelection = showTestSelection; window.backToMainMenuFromSelection = backToMainMenuFromSelection; window.enterExam = enterExam; window.promptBackToMenu = promptBackToMenu; window.promptResetExam = promptResetExam; window.promptSubmitExam = promptSubmitExam; window.showHistory = showHistory; window.backToMainMenuFromHistory = backToMainMenuFromHistory; window.generateSlip = generateSlip; window.exitReviewMode = exitReviewMode; window.closePreview = closePreview; window.toggleMarkCurrentQ = toggleMarkCurrentQ; window.navPrevQ = navPrevQ; window.navNextQ = navNextQ; window.jumpToQuestion = jumpToQuestion; window.selectAnswer = selectAnswer;
         })();
