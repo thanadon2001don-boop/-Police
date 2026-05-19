@@ -712,7 +712,8 @@
                     document.getElementById('loginOverlay').style.display = 'none';
                     document.getElementById('appContent').style.display = 'flex';
                     
-                    const safeEmailForSystem = String(user.email).toLowerCase();
+                    // เพิ่ม .trim() ที่นี่
+                    const safeEmailForSystem = String(user.email).toLowerCase().trim();
                     document.getElementById('navUserEmail').innerText = safeEmailForSystem;
                     document.getElementById('navUserAvatar').innerText = safeEmailForSystem.charAt(0).toUpperCase();
                     window.currentUserEmail = safeEmailForSystem; 
@@ -1151,7 +1152,8 @@
                 allQuestions.forEach((q, i) => { let uChoice = userAnswers[i]; let cor = getNormalizedAnswer(q.correctAnswer); if(uChoice === cor) { total++; const subjInfo = getSubjectInfo(i); if(subScores[subjInfo.name] !== undefined) subScores[subjInfo.name]++; } });
                 const percent = Math.round((total/allQuestions.length)*100); const passThreshold = getPassingThreshold(currentBranch); const isPass = percent >= passThreshold; const dateStr = new Date().toLocaleString('th-TH');
 
-                const safeEmail = String(window.currentUserEmail).toLowerCase();
+                // เพิ่ม .trim() ที่นี่
+                const safeEmail = String(window.currentUserEmail).toLowerCase().trim();
                 const historyRecord = { userEmail: safeEmail, branch: currentBranch, testName: currentTestName, date: dateStr, questions: JSON.parse(JSON.stringify(allQuestions)), userChoices: userAnswers, totalScore: total, totalQuestions: allQuestions.length, percent: percent, isPass: isPass, passThreshold: passThreshold, syllabus: syllabus, subScores: subScores, timestamp: window.firebaseServerTimestamp() };
 
                 try { await window.firebaseAddDoc(window.firebaseCollection(window.firebaseDB, "exam_history"), historyRecord); window.examHistoryLog.unshift(historyRecord); window.renderHistoryList(); showHistory(); window.showToast("บันทึกผลสอบเรียบร้อย", "success");}
@@ -1159,12 +1161,17 @@
                 finally { submitBtn.disabled = false; submitBtn.innerHTML = "💾 ส่งข้อสอบ (ประมวลผล)"; purgeEntireExamState(); }
             }
 
+            // ==========================================
+            // 🛡️ อัปเกรดระบบประวัติแบบ Real-time & ป้องกันข้อมูลหาย
+            // ==========================================
             window.loadHistoryFromFirebase = async function(email) {
                 if (!email) return;
-                const safeEmail = String(email).toLowerCase(); // ล็อกอีเมลเป็นพิมพ์เล็ก
+                
+                // 1. [อัปเกรด] บังคับตัวเล็กและ "ตัดช่องว่าง" (Trim) ป้องกัน Query พลาด
+                const safeEmail = String(email).toLowerCase().trim();
                 const cacheKey = 'examHistoryCache_' + safeEmail;
 
-                // [STEP 1] เสิร์ฟข้อมูลจาก Cache ในเครื่องก่อนทันที (ความเร็ว 0.01 วิ)
+                // 2. เสิร์ฟข้อมูลจาก Cache ในเครื่องก่อนทันที (ความเร็ว 0.01 วิ)
                 const cachedData = localStorage.getItem(cacheKey);
                 if (cachedData) {
                     window.examHistoryLog = JSON.parse(cachedData);
@@ -1173,33 +1180,56 @@
                     }
                 }
 
-                // [STEP 2] แอบวิ่งไปเช็คข้อมูลใหม่จาก Firebase เบื้องหลัง
+                // 3. [อัปเกรดขั้นสุด] เปลี่ยนมาใช้ onSnapshot ดึงข้อมูลแบบ Real-time
                 try {
-                    const q = window.firebaseQuery(window.firebaseCollection(window.firebaseDB, "exam_history"), window.firebaseWhere("userEmail", "==", safeEmail));
-                    const querySnapshot = await window.firebaseGetDocs(q);
+                    // ถอดสายเชื่อมต่อเก่าทิ้ง ป้องกันการดึงข้อมูลซ้อนทับกัน
+                    if (window.historyUnsubscribe) window.historyUnsubscribe();
 
-                    let freshHistoryLog = [];
-                    querySnapshot.forEach((doc) => { freshHistoryLog.push(doc.data()); });
+                    const q = window.firebaseQuery(
+                        window.firebaseCollection(window.firebaseDB, "exam_history"),
+                        window.firebaseWhere("userEmail", "==", safeEmail)
+                    );
 
-                    freshHistoryLog.sort((a,b) => {
-                        let timeA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
-                        let timeB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
-                        return timeB - timeA;
+                    // เชื่อมต่อท่อข้อมูลสด ข้อมูลใน Firebase เปลี่ยน หน้าเว็บเปลี่ยนตามทันที
+                    window.historyUnsubscribe = window.firebaseOnSnapshot(q, (querySnapshot) => {
+                        let freshHistoryLog = [];
+                        querySnapshot.forEach((doc) => { freshHistoryLog.push(doc.data()); });
+
+                        // จัดเรียงตามเวลาล่าสุด
+                        freshHistoryLog.sort((a,b) => {
+                            let timeA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
+                            let timeB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
+                            return timeB - timeA;
+                        });
+
+                        // 🚨 4. [หัวใจสำคัญ - ระบบกันตายหน้าจอหาย]
+                        // ถ้าระบบเราไม่มีปุ่มลบประวัติ แต่ Firebase ดันส่งค่าว่างกลับมา (0 รายการ)
+                        // ในขณะที่เครื่องเรามีประวัติอยู่แล้ว แสดงว่าเน็ตกระตุกหรือ Query พลาด
+                        // เราจะ "ขัดขืน" ไม่ยอมล้างหน้าจอเด็ดขาด!
+                        if (freshHistoryLog.length === 0 && window.examHistoryLog && window.examHistoryLog.length > 0) {
+                            console.warn("🛡️ ป้องกันหน้าจอกระพริบ: Firebase ส่งค่าว่างผิดปกติ ระบบจะใช้ Cache ต่อไป");
+                            return; // หยุดตรงนี้ ห้ามลบ Cache
+                        }
+
+                        // อัปเดตข้อมูลและหน้าจอ เฉพาะเมื่อมีข้อมูลเปลี่ยนแปลงจริงๆ
+                        if (JSON.stringify(freshHistoryLog) !== JSON.stringify(window.examHistoryLog)) {
+                            window.examHistoryLog = freshHistoryLog;
+                            localStorage.setItem(cacheKey, JSON.stringify(freshHistoryLog)); // เซฟลงเครื่อง
+                            
+                            // ถ้ายืนอยู่หน้าประวัติ ให้วาดใหม่แบบเนียนๆ
+                            if (document.getElementById('historyInterface').style.display === 'flex') {
+                                window.renderHistoryList();
+                            }
+                        }
+                    }, (error) => {
+                        console.error("การเชื่อมต่อประวัติแบบสดล้มเหลว:", error);
                     });
 
-                    // ถ้าข้อมูลใหม่ไม่เหมือนของเก่า ให้อัปเดตและวาดหน้าจอใหม่
-                    if (JSON.stringify(freshHistoryLog) !== cachedData) {
-                        window.examHistoryLog = freshHistoryLog;
-                        localStorage.setItem(cacheKey, JSON.stringify(freshHistoryLog)); // อัปเดต Cache
-                        
-                        if (document.getElementById('historyInterface').style.display === 'flex') {
-                            window.renderHistoryList(); // รีเฟรชจอแบบเนียนๆ
-                        }
-                    }
                 } catch (e) {
-                    console.error("เชื่อมต่อฐานข้อมูลประวัติล้มเหลว โหลดจาก Cache แทน", e);
+                    console.error("เกิดข้อผิดพลาดในการรันระบบประวัติ:", e);
                 }
             };
+            // ==========================================
 
             window.renderHistoryList = function() {
                 const container = document.getElementById('historyContainer');
