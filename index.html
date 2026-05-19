@@ -414,6 +414,25 @@
         <div class="spinner" style="border-top-color: #991b1b; border-color: rgba(153, 27, 27, 0.2); width: 45px; height: 45px; border-width: 4px;"></div>
         <div style="margin-top: 20px; color: #0A192F; font-size: 16px; font-weight: 800; font-family: 'Prompt';">กำลังตรวจสอบข้อมูลผู้ใช้งาน...</div>
     </div>
+    <script>
+        // ตั้งเวลาสูงสุด 6 วินาที หาก Firebase ไม่ทำงาน ให้แสดงปุ่มแก้ปัญหาอัตโนมัติ
+        window.fallbackTimeout = setTimeout(() => {
+            const loader = document.getElementById('initialLoader');
+            if (loader && window.getComputedStyle(loader).display !== 'none') {
+                loader.innerHTML = `
+                    <div style="text-align:center; padding: 25px 30px; background: white; border-radius: 20px; border: 2px solid #cbd5e1; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 85%;">
+                        <div style="color: #9B2C2C; font-size: 45px; margin-bottom: 15px; line-height: 1;">⚠️</div>
+                        <h3 style="margin:0 0 10px 0; color:#0A192F; font-family: 'Prompt'; font-weight: 900;">การเชื่อมต่อล่าช้ากว่าปกติ</h3>
+                        <p style="margin:0 0 25px 0; color:#64748b; font-size:15px; font-family: 'Prompt'; line-height: 1.6;">อินเทอร์เน็ตของคุณอาจไม่เสถียร<br>หรือเซิร์ฟเวอร์ระบบกำลังหนาแน่น</p>
+                        <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+                            <button onclick="window.location.reload()" style="background: linear-gradient(180deg, #991b1b 0%, #7f1d1d 100%); color: white; border: none; padding: 12px 25px; border-radius: 12px; font-family: 'Prompt'; font-weight: 800; cursor: pointer; box-shadow: 0 4px 0 #7f1d1d;">🔄 โหลดใหม่</button>
+                            <button onclick="document.getElementById('initialLoader').style.display='none'" style="background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%); color: #0A192F; border: 2px solid #cbd5e1; padding: 12px 25px; border-radius: 12px; font-family: 'Prompt'; font-weight: 800; cursor: pointer; box-shadow: 0 4px 0 #cbd5e1;">⏩ ข้ามการโหลด</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }, 6000); 
+    </script>
     <div id="toastContainer"></div>
 
     <div id="loginOverlay">
@@ -673,58 +692,84 @@
             });
         }
 
+        // ==========================================
+        // 🛠️ จุดที่แก้ไข: ปรับปรุง onAuthStateChanged ให้เป็น Non-blocking 
+        // ==========================================
         onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('appContent').style.display = 'flex';
-                
-                // --- 🛠️ ส่วนที่ 1: แก้ไขบังคับอีเมลตัวพิมพ์เล็กและกู้ Cache (แก้ปัญหา F5 หน้าขาว) ---
-                const safeEmailForSystem = String(user.email).toLowerCase();
-                document.getElementById('navUserEmail').innerText = safeEmailForSystem;
-                document.getElementById('navUserAvatar').innerText = safeEmailForSystem.charAt(0).toUpperCase();
-                window.currentUserEmail = safeEmailForSystem; 
-                
-                // กู้คืนข้อมูลจาก Local Storage ทันทีที่โหลดหน้าจอ
-                const instantHistory = localStorage.getItem('examHistoryCache_' + safeEmailForSystem);
-                if(instantHistory) window.examHistoryLog = JSON.parse(instantHistory);
-
-                const instantCounts = localStorage.getItem('systemExamCountsCache');
-                if(instantCounts) window.systemExamCounts = JSON.parse(instantCounts);
-                // ----------------------------------------------------------------------
-                
-                const currentToken = localStorage.getItem('sessionToken');
-                if(currentToken) {
-                    startSessionRadar(user.email, currentToken);
+            // สร้างฟังก์ชันภายในเพื่อสั่งปิดหน้าจอโหลดหลักทันที และยกเลิก Failsafe Timeout ป้องกันอาการค้างล็อก
+            const ยกเลิกหน้าจอโหลด = () => {
+                const initialLoader = document.getElementById('initialLoader');
+                if (initialLoader) {
+                    initialLoader.style.opacity = '0';
+                    setTimeout(() => initialLoader.style.display = 'none', 300);
                 }
-                
-                // ปล่อยให้ระบบวิ่งไปอัปเดตประวัติของใหม่เบื้องหลัง
-                await window.loadHistoryFromFirebase(safeEmailForSystem);
+                // ยืนยันการยกเลิก Failsafe
+                if (window.fallbackTimeout) clearTimeout(window.fallbackTimeout);
+            };
 
-                // แอบโหลดจำนวนชุดข้อสอบมารอไว้ล่วงหน้า (และเก็บลง Cache)
-                window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB, "system_settings", "exam_counts"))
-                    .then(snap => { 
-                        if(snap.exists()) {
-                            window.systemExamCounts = snap.data(); 
-                            localStorage.setItem('systemExamCountsCache', JSON.stringify(snap.data()));
+            try {
+                if (user) {
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    document.getElementById('appContent').style.display = 'flex';
+                    
+                    const safeEmailForSystem = String(user.email).toLowerCase();
+                    document.getElementById('navUserEmail').innerText = safeEmailForSystem;
+                    document.getElementById('navUserAvatar').innerText = safeEmailForSystem.charAt(0).toUpperCase();
+                    window.currentUserEmail = safeEmailForSystem; 
+                    
+                    // ดึงข้อมูลประวัติจาก Cache ในเครื่องขึ้นมาวาดบนจอรอก่อนทันทีเพื่อความเร็วสูงสุด
+                    try {
+                        const instantHistory = localStorage.getItem('examHistoryCache_' + safeEmailForSystem);
+                        if(instantHistory) {
+                            window.examHistoryLog = JSON.parse(instantHistory);
+                            if (typeof window.renderHistoryList === 'function') window.renderHistoryList();
                         }
+
+                        const instantCounts = localStorage.getItem('systemExamCountsCache');
+                        if(instantCounts) window.systemExamCounts = JSON.parse(instantCounts);
+                    } catch (cacheError) {
+                        console.warn("ระบบเคลียร์แคชที่ค้างเก่าออกชั่วคราว:", cacheError);
+                    }
+                    
+                    // ปลดล็อกหน้าต่างโหลดหลักทันทีเพื่อให้ผู้ใช้ใช้งานเมนูได้ ไม่ต้องรอเน็ต
+                    ยกเลิกหน้าจอโหลด();
+                    
+                    const currentToken = localStorage.getItem('sessionToken');
+                    if(currentToken) {
+                        startSessionRadar(user.email, currentToken);
+                    }
+                    
+                    // ทำการดึงข้อมูลจาก Firebase แบบทำงานเบื้องหลัง (Background Async) ไม่บล็อกหน้าจอ
+                    window.loadHistoryFromFirebase(safeEmailForSystem).catch(e => {
+                        console.error("การโหลดประวัติหลังบ้านติดขัดสิทธิ์:", e);
                     });
 
-            } else {
-                document.getElementById('loginOverlay').style.display = 'flex';
-                document.getElementById('appContent').style.display = 'none';
-                document.getElementById('emailInput').value = '';
-                document.getElementById('passwordInput').value = '';
-                if(unsubscribeSession) { unsubscribeSession(); unsubscribeSession = null; } 
-            }
+                    window.firebaseGetDoc(window.firebaseDoc(window.firebaseDB, "system_settings", "exam_counts"))
+                        .then(snap => { 
+                            if(snap.exists()) {
+                                window.systemExamCounts = snap.data(); 
+                                localStorage.setItem('systemExamCountsCache', JSON.stringify(snap.data()));
+                            }
+                        }).catch(e => console.error(e));
 
-            // 👇👇 เพิ่มคำสั่งซ่อน Loading เมื่อตรวจสอบเสร็จ 👇👇
-            const initialLoader = document.getElementById('initialLoader');
-            if (initialLoader) {
-                initialLoader.style.opacity = '0';
-                setTimeout(() => initialLoader.style.display = 'none', 300);
+                } else {
+                    document.getElementById('loginOverlay').style.display = 'flex';
+                    document.getElementById('appContent').style.display = 'none';
+                    document.getElementById('emailInput').value = '';
+                    document.getElementById('passwordInput').value = '';
+                    if(unsubscribeSession) { unsubscribeSession(); unsubscribeSession = null; } 
+                    
+                    // สั่งปิดหน้าจอโหลดหลักในกรณีไม่ได้ล็อกอิน
+                    ยกเลิกหน้าจอโหลด();
+                }
+            } catch (criticalError) {
+                console.error("พบข้อผิดพลาดในสิทธิ์ผู้ใช้งาน:", criticalError);
+                ยกเลิกหน้าจอโหลด(); // มั่นใจได้ว่าหน้าจอจะถูกปลดล็อกเสมอ
             }
-            // 👆👆 สิ้นสุดคำสั่งซ่อน 👆👆
         });
+        // ==========================================
+        // 👆 สิ้นสุดการแก้ไข onAuthStateChanged
+        // ==========================================
 
         document.getElementById('btnLogin').addEventListener('click', () => {
             const email = document.getElementById('emailInput').value.trim();
@@ -837,7 +882,6 @@
                 localStorage.setItem(`exam_state_${currentBranch}_${currentTestName}`, JSON.stringify(state));
             }
 
-            // --- 🛠️ ส่วนที่ 2: อัปเกรดการโหลดเมนูเลือกชุดข้อสอบ (SWR Cache) ---
             async function showTestSelection(branchName) {
                 currentBranch = branchName; 
                 document.getElementById('mainMenu').style.display = 'none'; 
@@ -1107,7 +1151,6 @@
                 allQuestions.forEach((q, i) => { let uChoice = userAnswers[i]; let cor = getNormalizedAnswer(q.correctAnswer); if(uChoice === cor) { total++; const subjInfo = getSubjectInfo(i); if(subScores[subjInfo.name] !== undefined) subScores[subjInfo.name]++; } });
                 const percent = Math.round((total/allQuestions.length)*100); const passThreshold = getPassingThreshold(currentBranch); const isPass = percent >= passThreshold; const dateStr = new Date().toLocaleString('th-TH');
 
-                // --- 🛠️ ส่วนที่ 3: บังคับให้อีเมลเป็นพิมพ์เล็กเสมอตอนบันทึกผล ---
                 const safeEmail = String(window.currentUserEmail).toLowerCase();
                 const historyRecord = { userEmail: safeEmail, branch: currentBranch, testName: currentTestName, date: dateStr, questions: JSON.parse(JSON.stringify(allQuestions)), userChoices: userAnswers, totalScore: total, totalQuestions: allQuestions.length, percent: percent, isPass: isPass, passThreshold: passThreshold, syllabus: syllabus, subScores: subScores, timestamp: window.firebaseServerTimestamp() };
 
@@ -1116,7 +1159,6 @@
                 finally { submitBtn.disabled = false; submitBtn.innerHTML = "💾 ส่งข้อสอบ (ประมวลผล)"; purgeEntireExamState(); }
             }
 
-            // --- 🛠️ ส่วนที่ 4: อัปเกรดฟังก์ชันโหลดประวัติ SWR Cache ---
             window.loadHistoryFromFirebase = async function(email) {
                 if (!email) return;
                 const safeEmail = String(email).toLowerCase(); // ล็อกอีเมลเป็นพิมพ์เล็ก
