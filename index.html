@@ -720,7 +720,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, setDoc, onSnapshot, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+        // --- 1. เพิ่ม limit และ startAfter สำหรับรองรับ Hardcore Pagination ---
+        import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, orderBy, doc, getDoc, setDoc, onSnapshot, enableIndexedDbPersistence, limit, startAfter } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAbdf78FUV58UXzTJrbB-7ZedxJs3Yrleg",
@@ -746,9 +747,15 @@
         window.firebaseDB = db; window.firebaseAddDoc = addDoc; window.firebaseCollection = collection;
         window.firebaseServerTimestamp = serverTimestamp; window.firebaseQuery = query; window.firebaseWhere = where;
         window.firebaseGetDocs = getDocs; window.firebaseOrderBy = orderBy; window.firebaseDoc = doc; window.firebaseGetDoc = getDoc;
-        window.firebaseSetDoc = setDoc; window.firebaseOnSnapshot = onSnapshot;
+        // --- 2. อัปเดต Global Firebase Object ---
+        window.firebaseSetDoc = setDoc; window.firebaseOnSnapshot = onSnapshot; window.firebaseLimit = limit; window.firebaseStartAfter = startAfter;
 
         let unsubscribeSession = null; 
+
+        // --- 3. ตัวแปรเก็บสถานะการโหลดประวัติ (สำหรับ Hardcore User) ---
+        window.lastHistoryDoc = null;
+        window.hasMoreHistory = true;
+        window.isFetchingHistory = false;
 
         function startSessionRadar(email, tokenToTrack) {
             if (unsubscribeSession) { unsubscribeSession(); } 
@@ -770,7 +777,6 @@
                     const docRef = window.firebaseDoc(window.firebaseDB, "system_settings", "exam_counts");
                     const docSnap = await window.firebaseGetDoc(docRef);
                     if (docSnap.exists()) {
-                        // เปลี่ยนตรงนี้เป็น safeCacheSave ด้วยเพื่อความปลอดภัย 
                         if(window.safeCacheSave) window.safeCacheSave('systemExamCountsCache', JSON.stringify(docSnap.data()));
                         else localStorage.setItem('systemExamCountsCache', JSON.stringify(docSnap.data()));
                     }
@@ -800,6 +806,10 @@
                     document.getElementById('navUserAvatar').innerText = safeEmailForSystem.charAt(0).toUpperCase();
                     window.currentUserEmail = safeEmailForSystem; 
                     
+                    // --- 4. รีเซ็ตสถานะการโหลดเมื่อ Login เข้ามาใหม่ ---
+                    window.lastHistoryDoc = null;
+                    window.hasMoreHistory = true;
+
                     try {
                         const instantHistory = localStorage.getItem('examHistoryCache_' + safeEmailForSystem);
                         if(instantHistory) {
@@ -908,14 +918,22 @@
         window.confirmLogout = () => { document.getElementById('logoutConfirmModal').style.display = 'flex'; setTimeout(() => { document.getElementById('logoutConfirmModal').classList.add('show'); }, 10); };
         window.closeLogoutModal = () => { document.getElementById('logoutConfirmModal').classList.remove('show'); setTimeout(() => { document.getElementById('logoutConfirmModal').style.display = 'none'; }, 150); };
         
-        window.executeLogout = () => { localStorage.removeItem('sessionToken'); document.getElementById('emailInput').value = ''; document.getElementById('passwordInput').value = ''; window.closeLogoutModal(); signOut(auth); };
+        window.executeLogout = () => { 
+            localStorage.removeItem('sessionToken'); 
+            document.getElementById('emailInput').value = ''; 
+            document.getElementById('passwordInput').value = ''; 
+            window.closeLogoutModal(); 
+            // --- 5. รีเซ็ตสถานะเวลาออกจากระบบ ---
+            window.lastHistoryDoc = null;
+            window.hasMoreHistory = true;
+            signOut(auth); 
+        };
     </script>
 
     <script>
         (function() {
             window.examCache = window.examCache || {};
 
-            /* --- เพิ่มฟังก์ชันจัดการแคชอัจฉริยะ (Safe Storage) เพื่อป้องกันพื้นที่เต็ม --- */
             window.safeCacheSave = function(key, dataString) {
                 try {
                     localStorage.setItem(key, dataString);
@@ -941,7 +959,6 @@
                     }
                 }
             };
-            /* ------------------------------------------------------------- */
 
             window.showToast = function(message, type = 'info') {
                 const container = document.getElementById('toastContainer');
@@ -989,7 +1006,6 @@
 
             window.systemExamCounts = null; 
 
-            // ฟังก์ชันเซฟสถานะ Auto-Save
             function saveExamState() {
                 if(isReviewMode || !activeTestName) return;
                 const state = {
@@ -997,7 +1013,6 @@
                     marked: markedQuestions,
                     timeLeft: totalSeconds
                 };
-                /* --- ปรับแก้การเรียกใช้ localStorage มาเป็น safeCacheSave --- */
                 window.safeCacheSave(`exam_state_${currentBranch}_${currentTestName}`, JSON.stringify(state));
             }
 
@@ -1124,7 +1139,6 @@
                             allQuestions = docSnap.data().questions;
                             if(allQuestions.length === 0) { loadingArea.innerHTML = '<div style="color:#9B2C2C; font-weight:bold; font-size:18px; text-align:center; padding-top:40px;">ไม่พบข้อสอบในชุดนี้</div>'; return; }
                             
-                            /* --- ปรับแก้การเรียกใช้ localStorage มาเป็น safeCacheSave --- */
                             window.safeCacheSave('examCache_' + docId, JSON.stringify(allQuestions)); 
                             
                             initExamData(); loadingArea.style.display = 'none'; window.showToast("โหลดข้อสอบสำเร็จ", "success");
@@ -1277,6 +1291,7 @@
                 finally { submitBtn.disabled = false; submitBtn.innerHTML = "💾 ส่งข้อสอบ (ประมวลผล)"; purgeEntireExamState(); }
             }
 
+            // --- 6. อัปเดตฟังก์ชันดึงประวัติเพื่อรองรับ Hardcore Pagination ---
             window.loadHistoryFromFirebase = async function(email) {
                 if (!email) return;
                 const safeEmail = String(email).toLowerCase().trim();
@@ -1295,28 +1310,30 @@
 
                     const q = window.firebaseQuery(
                         window.firebaseCollection(window.firebaseDB, "exam_history"),
-                        window.firebaseWhere("userEmail", "==", safeEmail)
+                        window.firebaseWhere("userEmail", "==", safeEmail),
+                        window.firebaseOrderBy("timestamp", "desc"),
+                        window.firebaseLimit(20) // โหลดมาแค่ 20 รายการแรกก่อน
                     );
 
                     window.historyUnsubscribe = window.firebaseOnSnapshot(q, (querySnapshot) => {
                         let freshHistoryLog = [];
+                        if (!querySnapshot.empty) {
+                            window.lastHistoryDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+                        }
                         querySnapshot.forEach((doc) => { freshHistoryLog.push(doc.data()); });
 
-                        freshHistoryLog.sort((a,b) => {
-                            let timeA = a.timestamp ? (a.timestamp.seconds || 0) : 0;
-                            let timeB = b.timestamp ? (b.timestamp.seconds || 0) : 0;
-                            return timeB - timeA;
-                        });
-
-                        if (freshHistoryLog.length === 0 && window.examHistoryLog && window.examHistoryLog.length > 0) return;
-
-                        if (JSON.stringify(freshHistoryLog) !== JSON.stringify(window.examHistoryLog)) {
+                        if (window.examHistoryLog.length <= 20) {
                             window.examHistoryLog = freshHistoryLog;
-                            localStorage.setItem(cacheKey, JSON.stringify(freshHistoryLog)); 
-                            
-                            if (document.getElementById('historyInterface').style.display === 'flex') {
-                                window.renderHistoryList();
-                            }
+                        } else {
+                            // หากมีการโหลดข้อมูลเก่าไปแล้ว ให้อัปเดตเฉพาะ 20 รายการบนสุดเพื่อรักษาข้อมูลเก่าไว้
+                            window.examHistoryLog.splice(0, freshHistoryLog.length, ...freshHistoryLog);
+                        }
+
+                        // Hardcore Optimization: เซฟลงเครื่องแค่ 20 รายการแรก เพื่อป้องกัน LocalStorage แคชเต็ม (5MB Limit)
+                        localStorage.setItem(cacheKey, JSON.stringify(freshHistoryLog)); 
+                        
+                        if (document.getElementById('historyInterface').style.display === 'flex') {
+                            window.renderHistoryList();
                         }
                     }, (error) => {
                         console.error("การเชื่อมต่อประวัติแบบสดล้มเหลว:", error);
@@ -1327,6 +1344,50 @@
                 }
             };
 
+            // --- 7. เพิ่มฟังก์ชัน Load More ประวัติสอบสำหรับดึงข้อมูลชุดถัดไป ---
+            window.loadMoreHistory = async function() {
+                if(window.isFetchingHistory || !window.hasMoreHistory || !window.lastHistoryDoc) return;
+                window.isFetchingHistory = true;
+                
+                const btn = document.getElementById('btnLoadMoreHistory');
+                if(btn) { 
+                    btn.innerHTML = '<span class="spinner" style="border-top-color:#0A192F; border-color:rgba(10,25,47,0.2); width:16px; height:16px; border-width:3px; margin-right:8px; display:inline-block; vertical-align:middle;"></span>กำลังโหลดประวัติ...'; 
+                    btn.disabled = true; 
+                }
+
+                try {
+                    const safeEmail = String(window.currentUserEmail).toLowerCase().trim();
+                    const q = window.firebaseQuery(
+                        window.firebaseCollection(window.firebaseDB, "exam_history"),
+                        window.firebaseWhere("userEmail", "==", safeEmail),
+                        window.firebaseOrderBy("timestamp", "desc"),
+                        window.firebaseStartAfter(window.lastHistoryDoc),
+                        window.firebaseLimit(20)
+                    );
+
+                    const snapshot = await window.firebaseGetDocs(q);
+                    if (snapshot.empty) {
+                        window.hasMoreHistory = false;
+                    } else {
+                        window.lastHistoryDoc = snapshot.docs[snapshot.docs.length - 1];
+                        let moreHistory = [];
+                        snapshot.forEach(doc => moreHistory.push(doc.data()));
+                        window.examHistoryLog = window.examHistoryLog.concat(moreHistory);
+                        
+                        if (snapshot.docs.length < 20) {
+                            window.hasMoreHistory = false;
+                        }
+                    }
+                } catch (e) {
+                    console.error("โหลดประวัติเพิ่มเติมล้มเหลว:", e);
+                    window.showToast("โหลดข้อมูลล้มเหลว กรุณาลองใหม่", "error");
+                } finally {
+                    window.isFetchingHistory = false;
+                    window.renderHistoryList();
+                }
+            };
+
+            // --- 8. อัปเดต Render ให้รองรับระบบ Load More ได้นุ่มนวล ---
             window.renderHistoryList = function() {
                 const container = document.getElementById('historyContainer');
                 if (!container) return;
@@ -1354,6 +1415,20 @@
 
                     if (i < window.examHistoryLog.length) {
                         setTimeout(renderChunk, 50); 
+                    } else {
+                        // แทรกปุ่ม Load More อัตโนมัติ (ใส่ Inline Style รักษาโครงสร้างเดิม)
+                        if (window.hasMoreHistory && window.examHistoryLog.length >= 20) {
+                            const loadBtn = `<button id="btnLoadMoreHistory" onclick="loadMoreHistory()" style="width: 100%; padding: 16px; background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%); color: #0A192F; border: 2px solid #cbd5e1; border-radius: 20px; font-size: 16px; font-weight: 800; cursor: pointer; font-family: 'Prompt'; transition: all 0.2s; box-shadow: 0 6px 0 #cbd5e1, 0 10px 15px rgba(0,0,0,0.05); margin-top: 10px; display: flex; align-items: center; justify-content: center;">👇 โหลดประวัติเก่าเพิ่มเติม</button>`;
+                            container.insertAdjacentHTML('beforeend', loadBtn);
+                            
+                            const btnEl = document.getElementById('btnLoadMoreHistory');
+                            if (btnEl) {
+                                btnEl.onmousedown = function() { this.style.transform = 'translateY(6px)'; this.style.boxShadow = '0 0 0 #cbd5e1, 0 2px 5px rgba(0,0,0,0.05)'; };
+                                btnEl.onmouseup = function() { this.style.transform = ''; this.style.boxShadow = '0 6px 0 #cbd5e1, 0 10px 15px rgba(0,0,0,0.05)'; };
+                            }
+                        } else if (!window.hasMoreHistory && window.examHistoryLog.length > 0) {
+                            container.insertAdjacentHTML('beforeend', `<div style="text-align: center; color: var(--text-muted); padding: 25px 0; font-weight: 700; font-size: 14px;">--- แสดงประวัติทั้งหมดแล้ว ---</div>`);
+                        }
                     }
                 }
                 
