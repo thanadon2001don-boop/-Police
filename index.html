@@ -410,10 +410,6 @@
 </head>
 <body>
 
-    <div id="initialLoader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 9999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.3s ease;">
-        <div class="spinner" style="border-top-color: #991b1b; border-color: rgba(153, 27, 27, 0.2); width: 45px; height: 45px; border-width: 4px;"></div>
-        <div style="margin-top: 20px; color: #0A192F; font-size: 16px; font-weight: 800; font-family: 'Prompt';">กำลังตรวจสอบข้อมูลผู้ใช้งาน...</div>
-    </div>
     <script>
         // ตั้งเวลาสูงสุด 6 วินาที หาก Firebase ไม่ทำงาน ให้แสดงปุ่มแก้ปัญหาอัตโนมัติ
         window.fallbackTimeout = setTimeout(() => {
@@ -438,26 +434,34 @@
     <div id="loginOverlay">
         <div class="login-box">
             <div class="login-logo"><span class="police-text">Police</span> <span class="test-text">- Test</span></div>
-            <h2 style="margin-top: 0; color: #0A192F; font-size: 22px; font-weight: 900;">ลงชื่อเข้าใช้งานระบบ</h2>
             
-            <div class="error-msg" id="errorMsg">ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง</div>
-            
-            <div class="input-group">
-                <label for="emailInput">ชื่อผู้ใช้งาน</label>
-                <input type="email" id="emailInput" autocomplete="off" required>
+            <div id="loginSpinner" style="padding: 30px 0; display: flex; flex-direction: column; align-items: center;">
+                <div class="spinner" style="border-top-color: #991b1b; border-color: rgba(153, 27, 27, 0.1); width: 40px; height: 40px; border-width: 4px;"></div>
+                <div style="margin-top: 15px; color: #64748b; font-size: 14px; font-weight: 700;">กำลังตรวจสอบสถานะ...</div>
             </div>
-            
-            <div class="input-group">
-                <label for="passwordInput">รหัสผ่าน</label>
-                <div class="password-wrapper">
-                    <input type="password" id="passwordInput" autocomplete="new-password" required>
-                    <span id="togglePassword" class="toggle-password">
-                        <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
-                    </span>
+
+            <div id="loginInputs" style="display: none; opacity: 0; transition: opacity 0.5s ease;">
+                <h2 style="margin-top: 0; color: #0A192F; font-size: 22px; font-weight: 900;">ลงชื่อเข้าใช้งานระบบ</h2>
+                
+                <div class="error-msg" id="errorMsg">ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง</div>
+                
+                <div class="input-group">
+                    <label for="emailInput">ชื่อผู้ใช้งาน</label>
+                    <input type="email" id="emailInput" autocomplete="off" required>
                 </div>
+                
+                <div class="input-group">
+                    <label for="passwordInput">รหัสผ่าน</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="passwordInput" autocomplete="new-password" required>
+                        <span id="togglePassword" class="toggle-password">
+                            <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                            <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        </span>
+                    </div>
+                </div>
+                <button class="btn-login" id="btnLogin">เข้าสู่ระบบ</button>
             </div>
-            <button class="btn-login" id="btnLogin">เข้าสู่ระบบ</button>
         </div>
     </div>
 
@@ -693,17 +697,10 @@
         }
 
         // ==========================================
-        // 🛠️ จุดที่แก้ไข: ปรับปรุง onAuthStateChanged ให้เป็น Non-blocking 
+        // 🛠️ อัปเดต onAuthStateChanged สำหรับ UI ใหม่
         // ==========================================
         onAuthStateChanged(auth, async (user) => {
-            // สร้างฟังก์ชันภายในเพื่อสั่งปิดหน้าจอโหลดหลักทันที และยกเลิก Failsafe Timeout ป้องกันอาการค้างล็อก
             const ยกเลิกหน้าจอโหลด = () => {
-                const initialLoader = document.getElementById('initialLoader');
-                if (initialLoader) {
-                    initialLoader.style.opacity = '0';
-                    setTimeout(() => initialLoader.style.display = 'none', 300);
-                }
-                // ยืนยันการยกเลิก Failsafe
                 if (window.fallbackTimeout) clearTimeout(window.fallbackTimeout);
             };
 
@@ -712,13 +709,11 @@
                     document.getElementById('loginOverlay').style.display = 'none';
                     document.getElementById('appContent').style.display = 'flex';
                     
-                    // เพิ่ม .trim() ที่นี่
                     const safeEmailForSystem = String(user.email).toLowerCase().trim();
                     document.getElementById('navUserEmail').innerText = safeEmailForSystem;
                     document.getElementById('navUserAvatar').innerText = safeEmailForSystem.charAt(0).toUpperCase();
                     window.currentUserEmail = safeEmailForSystem; 
                     
-                    // ดึงข้อมูลประวัติจาก Cache ในเครื่องขึ้นมาวาดบนจอรอก่อนทันทีเพื่อความเร็วสูงสุด
                     try {
                         const instantHistory = localStorage.getItem('examHistoryCache_' + safeEmailForSystem);
                         if(instantHistory) {
@@ -732,7 +727,6 @@
                         console.warn("ระบบเคลียร์แคชที่ค้างเก่าออกชั่วคราว:", cacheError);
                     }
                     
-                    // ปลดล็อกหน้าต่างโหลดหลักทันทีเพื่อให้ผู้ใช้ใช้งานเมนูได้ ไม่ต้องรอเน็ต
                     ยกเลิกหน้าจอโหลด();
                     
                     const currentToken = localStorage.getItem('sessionToken');
@@ -740,7 +734,6 @@
                         startSessionRadar(user.email, currentToken);
                     }
                     
-                    // ทำการดึงข้อมูลจาก Firebase แบบทำงานเบื้องหลัง (Background Async) ไม่บล็อกหน้าจอ
                     window.loadHistoryFromFirebase(safeEmailForSystem).catch(e => {
                         console.error("การโหลดประวัติหลังบ้านติดขัดสิทธิ์:", e);
                     });
@@ -756,21 +749,24 @@
                 } else {
                     document.getElementById('loginOverlay').style.display = 'flex';
                     document.getElementById('appContent').style.display = 'none';
+                    
+                    // [เพิ่มใหม่] สลับให้ฟอร์มกรอกล็อกอินแสดงขึ้นมาอย่างนุ่มนวล
+                    document.getElementById('loginSpinner').style.display = 'none';
+                    const loginInputs = document.getElementById('loginInputs');
+                    loginInputs.style.display = 'block';
+                    setTimeout(() => loginInputs.style.opacity = '1', 50);
+
                     document.getElementById('emailInput').value = '';
                     document.getElementById('passwordInput').value = '';
                     if(unsubscribeSession) { unsubscribeSession(); unsubscribeSession = null; } 
                     
-                    // สั่งปิดหน้าจอโหลดหลักในกรณีไม่ได้ล็อกอิน
                     ยกเลิกหน้าจอโหลด();
                 }
             } catch (criticalError) {
                 console.error("พบข้อผิดพลาดในสิทธิ์ผู้ใช้งาน:", criticalError);
-                ยกเลิกหน้าจอโหลด(); // มั่นใจได้ว่าหน้าจอจะถูกปลดล็อกเสมอ
+                ยกเลิกหน้าจอโหลด(); 
             }
         });
-        // ==========================================
-        // 👆 สิ้นสุดการแก้ไข onAuthStateChanged
-        // ==========================================
 
         document.getElementById('btnLogin').addEventListener('click', () => {
             const email = document.getElementById('emailInput').value.trim();
@@ -1295,5 +1291,33 @@
             window.showTestSelection = showTestSelection; window.backToMainMenuFromSelection = backToMainMenuFromSelection; window.enterExam = enterExam; window.promptBackToMenu = promptBackToMenu; window.promptResetExam = promptResetExam; window.promptSubmitExam = promptSubmitExam; window.showHistory = showHistory; window.backToMainMenuFromHistory = backToMainMenuFromHistory; window.generateSlip = generateSlip; window.exitReviewMode = exitReviewMode; window.closePreview = closePreview; window.toggleMarkCurrentQ = toggleMarkCurrentQ; window.navPrevQ = navPrevQ; window.navNextQ = navNextQ; window.jumpToQuestion = jumpToQuestion; window.selectAnswer = selectAnswer;
         })();
     </script>
+
+    <div id="refreshOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(248, 250, 252, 0.85); backdrop-filter: blur(10px); z-index: 9999999; flex-direction: column; align-items: center; justify-content: center;">
+        <div class="spinner" style="border-top-color: #0A192F; border-color: rgba(10, 25, 47, 0.1); width: 60px; height: 60px; border-width: 6px;"></div>
+        <h2 style="color: #0A192F; margin-top: 20px; font-weight: 900; font-family: 'Prompt';">กำลังรีเฟรชระบบ...</h2>
+    </div>
+
+    <script>
+        window.addEventListener('keydown', function(e) {
+            // เช็คว่ากด F5 หรือ Ctrl+R / Cmd+R
+            if (e.key === 'F5' || (e.ctrlKey && e.key.toLowerCase() === 'r') || (e.metaKey && e.key.toLowerCase() === 'r')) {
+                
+                // ถ้าระบบหลักกำลังแสดงอยู่ (ไม่ได้อยู่หน้าล็อกอิน)
+                if (document.getElementById('appContent').style.display === 'flex') {
+                    e.preventDefault(); // ยกเลิกการรีเฟรชแบบหน้าจอขาวของเบราว์เซอร์
+                    
+                    // แสดงหน้าจอหมุนโหลดของเราแทน
+                    document.getElementById('refreshOverlay').style.display = 'flex';
+                    
+                    // หน่วงเวลาให้เห็นการหมุน 0.5 วินาที แล้วสั่งรีโหลดระบบอย่างนุ่มนวล
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                }
+                // กรณีอยู่หน้า Login จะปล่อยให้ F5 ทำงานตามปกติ เพราะเราแก้ UI ให้ล็อกอินนิ่งสนิทแล้ว
+            }
+        });
+    </script>
+
 </body>
 </html>
