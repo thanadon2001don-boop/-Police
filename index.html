@@ -1286,7 +1286,13 @@
                 const safeEmail = String(window.currentUserEmail).toLowerCase().trim();
                 const historyRecord = { userEmail: safeEmail, branch: currentBranch, testName: currentTestName, date: dateStr, questions: JSON.parse(JSON.stringify(allQuestions)), userChoices: userAnswers, totalScore: total, totalQuestions: allQuestions.length, percent: percent, isPass: isPass, passThreshold: passThreshold, syllabus: syllabus, subScores: subScores, timestamp: window.firebaseServerTimestamp() };
 
-                try { await window.firebaseAddDoc(window.firebaseCollection(window.firebaseDB, "exam_history"), historyRecord); window.examHistoryLog.unshift(historyRecord); window.renderHistoryList(); showHistory(); window.showToast("บันทึกผลสอบเรียบร้อย", "success");}
+                try { 
+                    await window.firebaseAddDoc(window.firebaseCollection(window.firebaseDB, "exam_history"), historyRecord); 
+                    // ลบคำสั่ง window.examHistoryLog.unshift() และ window.renderHistoryList() ออกไป
+                    // เพราะเมื่อแอดข้อมูลลง Firebase แล้ว onSnapshot จะทำงานอัตโนมัติ (ไม่เบิ้ล 2 ชุด)
+                    showHistory(); 
+                    window.showToast("บันทึกผลสอบเรียบร้อย", "success");
+                }
                 catch (error) { window.showConfirm('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'ตกลง', 'modal-btn-confirm', null, false); }
                 finally { submitBtn.disabled = false; submitBtn.innerHTML = "💾 ส่งข้อสอบ (ประมวลผล)"; purgeEntireExamState(); }
             }
@@ -1387,11 +1393,17 @@
                 }
             };
 
-            // --- 8. อัปเดต Render ให้รองรับระบบ Load More ได้นุ่มนวล ---
+            // --- 8. อัปเดต Render ให้รองรับระบบ Load More ได้นุ่มนวล และป้องกันบั๊กเรนเดอร์เบิ้ล ---
+            window.renderHistoryTimeout = null;
             window.renderHistoryList = function() {
                 const container = document.getElementById('historyContainer');
                 if (!container) return;
                 
+                // ถ้าระบบกำลัง Render อยู่อีก Thread นึง ให้สั่งยกเลิกเพื่อกั้นไม่ให้วาดของทับกัน
+                if (window.renderHistoryTimeout) {
+                    clearTimeout(window.renderHistoryTimeout);
+                }
+
                 container.innerHTML = ''; 
 
                 if (!window.examHistoryLog || window.examHistoryLog.length === 0) {
@@ -1414,7 +1426,7 @@
                     }
 
                     if (i < window.examHistoryLog.length) {
-                        setTimeout(renderChunk, 50); 
+                        window.renderHistoryTimeout = setTimeout(renderChunk, 50); 
                     } else {
                         // แทรกปุ่ม Load More อัตโนมัติ (ใส่ Inline Style รักษาโครงสร้างเดิม)
                         if (window.hasMoreHistory && window.examHistoryLog.length >= 20) {
