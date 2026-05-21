@@ -843,9 +843,6 @@
                             if (document.getElementById('testSelectionMenu').style.display === 'flex' && window.activeBranchForSelection) {
                                 renderTestButtons(window.activeBranchForSelection, window.systemExamCounts[window.activeBranchForSelection], document.getElementById('testGrid'));
                             }
-                            
-                            // ✅ เพิ่มคำสั่งเรียก Pre-fetching เมื่อได้จำนวนชุดข้อสอบมาแล้ว และล็อกอินสำเร็จ
-                            if(window.startPreFetchingExams) window.startPreFetchingExams(window.systemExamCounts);
                         }
                     }, (error) => {
                         console.error("ซิงค์จำนวนข้อสอบเบื้องหลังล้มเหลว:", error);
@@ -959,54 +956,6 @@
                                 console.error("พื้นที่ก็ยังไม่พอ กรุณาเคลียร์แคชเบราว์เซอร์", retryError);
                             }
                         }
-                    }
-                }
-            };
-
-            // ✅ 1. เพิ่ม Helper Function สำหรับ Exponential Backoff
-            window.fetchWithBackoff = async function(docRef, maxRetries = 4, delay = 1000) {
-                for (let i = 0; i < maxRetries; i++) {
-                    try {
-                        const docSnap = await window.firebaseGetDoc(docRef);
-                        if (docSnap && docSnap.exists()) return docSnap;
-                        throw new Error("Document does not exist");
-                    } catch (error) {
-                        if (i === maxRetries - 1) throw error;
-                        console.warn(`[Backoff] รอบที่ ${i + 1} ขัดข้อง กำลังรอ ${delay}ms ก่อนลองใหม่...`, error);
-                        await new Promise(resolve => setTimeout(resolve, delay));
-                        delay *= 2; 
-                    }
-                }
-            };
-
-            // ✅ 2. เพิ่มระบบ Pre-fetching แอบโหลดข้อสอบล่วงหน้า
-            window.startPreFetchingExams = function(countsObj) {
-                if (!countsObj) return;
-                let delayIndex = 1;
-                for (const branch in countsObj) {
-                    const totalSets = parseInt(countsObj[branch]);
-                    if (isNaN(totalSets) || totalSets <= 0) continue;
-                    
-                    for (let i = 1; i <= totalSets; i++) {
-                        const docId = `${branch}_ชุดที่ ${i}`;
-                        // ถ้ามีในแคชแล้วข้ามไป
-                        if (localStorage.getItem('examCache_' + docId)) continue;
-
-                        // หน่วงเวลาการโหลดแต่ละชุดออกไป 1.5 วินาที เพื่อไม่ให้แย่งแบนด์วิธ
-                        setTimeout(async () => {
-                            try {
-                                const docRef = window.firebaseDoc(window.firebaseDB, "exam_papers", docId);
-                                // แอบดึงข้อมูลโดยใช้ Backoff เผื่อเบราว์เซอร์บล็อก
-                                const docSnap = await window.fetchWithBackoff(docRef, 3, 2000);
-                                if (docSnap && docSnap.exists()) {
-                                    window.safeCacheSave('examCache_' + docId, JSON.stringify(docSnap.data().questions));
-                                    console.log(`[Pre-fetch] ดาวน์โหลดข้อมูลล่วงหน้าสำเร็จ: ${docId}`);
-                                }
-                            } catch (err) {
-                                console.log(`[Pre-fetch] พักการโหลดล่วงหน้าสำหรับ: ${docId} (จะดึงสดเมื่อกดเริ่มสอบ)`);
-                            }
-                        }, delayIndex * 1500);
-                        delayIndex++;
                     }
                 }
             };
@@ -1160,62 +1109,79 @@
                 return { i: 0, name: 'วิชาอื่นๆ' };
             }
 
-            // ✅ 3. แก้ไขฟังก์ชันโหลดข้อสอบ ให้ใช้ Backoff และเน้นดึงจาก Cache
+            // ==========================================
+            // จุดที่แก้ไข: ถอดของเก่าทิ้ง และใส่ตัวดึงข้อมูลผ่าน CDN (REST API)
+            // ==========================================
             async function fetchExamFromAPI(branch, setNum) {
-                const docId = `${branch}_${setNum}`; 
+                // เปลี่ยนรูปแบบ ID ให้ตรงกับชื่อไฟล์ JSON บน Firebase Hosting
+                let docId = "";
+                if(branch.includes("ปราบปราม")) docId = `prap-pram-set${setNum}`;
+                else if(branch.includes("อำนวยการ")) docId = `aum-nuay-set${setNum}`;
+                else if(branch.includes("ตรวจคนเข้าเมือง")) docId = `tm-set${setNum}`;
+                else if(branch.includes("พิสูจน์หลักฐาน")) docId = `pt-set${setNum}`;
+                else docId = `unknown-set${setNum}`;
+                
                 const loadingArea = document.getElementById('loadingArea'); 
                 loadingArea.style.display = 'flex';
-                document.getElementById('loadingText').innerText = 'กำลังจัดเตรียมข้อสอบ...';
+                const cacheKey = 'examCache_' + docId;
+                const localCache = localStorage.getItem(cacheKey);
                 
-                // ตรวจสอบ Cache ในเครื่องก่อนเป็นอันดับแรก (0 วินาที)
-                const localCache = localStorage.getItem('examCache_' + docId);
+                // 1. ถ้าเครื่องผู้ใช้เคยโหลดมาแล้ว ดึงมาใช้ได้เลย 0 วินาที
                 if (localCache) { 
                     document.getElementById('loadingText').innerText = 'กำลังเปิดข้อสอบจากความจำเครื่อง...'; 
                     setTimeout(() => { 
                         allQuestions = JSON.parse(localCache); 
                         initExamData(); 
                         loadingArea.style.display = 'none'; 
-                        window.showToast("โหลดข้อสอบจากความจำเครื่องเรียบร้อย", "success");
+                        window.showToast("โหลดข้อสอบสำเร็จ (Offline Mode)", "success");
                     }, 400); 
                     return; 
                 }
 
-                // ถ้าไม่มีในเครื่อง (เช่นกดไวเกินไปก่อน Pre-fetch เสร็จ) ให้ดึงสดแบบมี Backoff
-                try {
-                    const docRef = window.firebaseDoc(window.firebaseDB, "exam_papers", docId); 
-                    const docSnap = await window.fetchWithBackoff(docRef);
+                document.getElementById('loadingText').innerText = 'กำลังดาวน์โหลดข้อสอบความเร็วสูง...';
 
-                    if (docSnap && docSnap.exists()) {
-                        allQuestions = docSnap.data().questions;
-                        if(allQuestions.length === 0) { 
-                            loadingArea.innerHTML = '<div style="color:#9B2C2C; font-weight:bold; font-size:18px; text-align:center; padding-top:40px;">ไม่พบข้อสอบในชุดนี้</div>'; 
-                            return; 
+                // 2. ถ้ายังไม่เคยโหลด ให้วิ่งไปดึงไฟล์จาก Firebase CDN
+                const url = `https://police-testv1.web.app/exams/${docId}.json`; 
+                
+                try {
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Cache-Control': 'no-cache'
                         }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`ไม่พบไฟล์ข้อสอบชุดนี้ (Status: ${response.status})`);
+                    }
+                    
+                    const examData = await response.json();
+                    
+                    // ตรวจสอบโครงสร้างไฟล์ JSON 
+                    if (examData && examData.questions && examData.questions.length > 0) {
+                        allQuestions = examData.questions;
                         
-                        window.safeCacheSave('examCache_' + docId, JSON.stringify(allQuestions)); 
+                        // 3. เซฟเก็บลงเครื่องเผื่อใช้คราวหลังแบบออฟไลน์
+                        window.safeCacheSave(cacheKey, JSON.stringify(allQuestions)); 
+                        
                         initExamData(); 
                         loadingArea.style.display = 'none'; 
-                        window.showToast("ดาวน์โหลดข้อสอบสำเร็จ", "success");
+                        window.showToast("โหลดข้อสอบสำเร็จ", "success");
+                    } else {
+                        throw new Error("ไฟล์ข้อสอบมีรูปแบบไม่ถูกต้อง");
                     }
+                    
                 } catch (e) {
-                    console.error("ดาวน์โหลดข้อสอบล้มเหลวหลังพยายามหลายครั้ง:", e); 
-                    let errorTitle = "การเชื่อมต่อถูกจำกัด"; 
-                    let errorMsg = "เบราว์เซอร์ปฏิเสธสัญญาณ หรืออินเทอร์เน็ตไม่เสถียร"; 
-                    
-                    if (e.code === 'permission-denied') { 
-                        errorTitle = "ถูกปฏิเสธการเข้าถึง"; 
-                        errorMsg = "คุณไม่มีสิทธิ์ดึงข้อมูลชุดข้อสอบนี้ กรุณาติดต่อแอดมิน"; 
-                    }
-                    
+                    console.error("การเชื่อมต่อผ่าน CDN ล้มเหลว:", e);
                     loadingArea.innerHTML = `
                         <div style="text-align:center; padding: 20px;">
-                            <div style="color:#b45309; font-weight:900; font-size:20px; margin-bottom:10px;">${errorTitle}</div>
-                            <div style="color:var(--text-muted); font-size:15px; margin-bottom:20px;">${errorMsg}</div>
-                            <button onclick="window.location.reload()" class="btn-submit" style="margin: 0 auto 10px; display: block; padding: 12px 25px; background: #0A192F;">🔄 โหลดหน้าเว็บใหม่เพื่อเริ่มอีกครั้ง</button>
+                            <div style="color:#b45309; font-weight:900; font-size:22px; margin-bottom:10px;">เกิดข้อผิดพลาดในการดึงข้อสอบ</div>
+                            <div style="color:var(--text-muted); font-size:16px; margin-bottom:25px;">${e.message}<br>โปรดตรวจสอบอินเทอร์เน็ตหรือรอการอัปเดตไฟล์จากแอดมิน</div>
                             <button onclick="promptBackToMenu()" class="btn-back" style="margin: 0 auto; display: block; padding: 12px 25px;">ย้อนกลับไปหน้าเมนู</button>
-                        </div>`; 
+                        </div>`;
                 }
             }
+            // ==========================================
 
             function initExamData() { 
                 const savedState = localStorage.getItem(`exam_state_${currentBranch}_${currentTestName}`);
@@ -1257,7 +1223,14 @@
                 let html = `<div class="question-card"><div class="question-header"><span class="question-number-badge">ข้อที่ ${qNum} จาก ${totalQ}</span><span class="question-subject-badge">${sanitizeHTML(subj.name)}</span></div><div class="question-text">${sanitizeHTML(q.question)}</div>`;
                 
                 ['a','b','c','d'].forEach(choice => {
-                    let choiceText = choice === 'a' ? q.choiceA : choice === 'b' ? q.choiceB : choice === 'c' ? q.choiceC : q.choiceD;
+                    // ปรับลอจิกให้รองรับชื่อฟิลด์จากไฟล์ JSON (options) 
+                    let choiceText = "";
+                    if (q.options && q.options.length === 4) {
+                        choiceText = choice === 'a' ? q.options[0] : choice === 'b' ? q.options[1] : choice === 'c' ? q.options[2] : q.options[3];
+                    } else {
+                        choiceText = choice === 'a' ? q.choiceA : choice === 'b' ? q.choiceB : choice === 'c' ? q.choiceC : q.choiceD;
+                    }
+
                     let choiceLabel = choice === 'a' ? 'ก' : choice === 'b' ? 'ข' : choice === 'c' ? 'ค' : 'ง';
                     let isSelected = (userAns === choice); let classAttr = 'choice-label' + (isSelected && !isReviewMode ? ' selected' : '');
                     if(isReviewMode) { if(choice === cor) classAttr += ' correct'; else if(isSelected && !isCorrect) classAttr += ' incorrect'; }
@@ -1349,13 +1322,7 @@
                 const safeEmail = String(window.currentUserEmail).toLowerCase().trim();
                 const historyRecord = { userEmail: safeEmail, branch: currentBranch, testName: currentTestName, date: dateStr, questions: JSON.parse(JSON.stringify(allQuestions)), userChoices: userAnswers, totalScore: total, totalQuestions: allQuestions.length, percent: percent, isPass: isPass, passThreshold: passThreshold, syllabus: syllabus, subScores: subScores, timestamp: window.firebaseServerTimestamp() };
 
-                try { 
-                    await window.firebaseAddDoc(window.firebaseCollection(window.firebaseDB, "exam_history"), historyRecord); 
-                    // ลบคำสั่ง window.examHistoryLog.unshift() และ window.renderHistoryList() ออกไป
-                    // เพราะเมื่อแอดข้อมูลลง Firebase แล้ว onSnapshot จะทำงานอัตโนมัติ (ไม่เบิ้ล 2 ชุด)
-                    showHistory(); 
-                    window.showToast("บันทึกผลสอบเรียบร้อย", "success");
-                }
+                try { await window.firebaseAddDoc(window.firebaseCollection(window.firebaseDB, "exam_history"), historyRecord); window.examHistoryLog.unshift(historyRecord); window.renderHistoryList(); showHistory(); window.showToast("บันทึกผลสอบเรียบร้อย", "success");}
                 catch (error) { window.showConfirm('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'ตกลง', 'modal-btn-confirm', null, false); }
                 finally { submitBtn.disabled = false; submitBtn.innerHTML = "💾 ส่งข้อสอบ (ประมวลผล)"; purgeEntireExamState(); }
             }
@@ -1456,17 +1423,11 @@
                 }
             };
 
-            // --- 8. อัปเดต Render ให้รองรับระบบ Load More ได้นุ่มนวล และป้องกันบั๊กเรนเดอร์เบิ้ล ---
-            window.renderHistoryTimeout = null;
+            // --- 8. อัปเดต Render ให้รองรับระบบ Load More ได้นุ่มนวล ---
             window.renderHistoryList = function() {
                 const container = document.getElementById('historyContainer');
                 if (!container) return;
                 
-                // ถ้าระบบกำลัง Render อยู่อีก Thread นึง ให้สั่งยกเลิกเพื่อกั้นไม่ให้วาดของทับกัน
-                if (window.renderHistoryTimeout) {
-                    clearTimeout(window.renderHistoryTimeout);
-                }
-
                 container.innerHTML = ''; 
 
                 if (!window.examHistoryLog || window.examHistoryLog.length === 0) {
@@ -1489,7 +1450,7 @@
                     }
 
                     if (i < window.examHistoryLog.length) {
-                        window.renderHistoryTimeout = setTimeout(renderChunk, 50); 
+                        setTimeout(renderChunk, 50); 
                     } else {
                         // แทรกปุ่ม Load More อัตโนมัติ (ใส่ Inline Style รักษาโครงสร้างเดิม)
                         if (window.hasMoreHistory && window.examHistoryLog.length >= 20) {
