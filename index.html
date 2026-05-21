@@ -843,6 +843,9 @@
                             if (document.getElementById('testSelectionMenu').style.display === 'flex' && window.activeBranchForSelection) {
                                 renderTestButtons(window.activeBranchForSelection, window.systemExamCounts[window.activeBranchForSelection], document.getElementById('testGrid'));
                             }
+                            
+                            // ✅ เพิ่มคำสั่งเรียก Pre-fetching เมื่อได้จำนวนชุดข้อสอบมาแล้ว และล็อกอินสำเร็จ
+                            if(window.startPreFetchingExams) window.startPreFetchingExams(window.systemExamCounts);
                         }
                     }, (error) => {
                         console.error("ซิงค์จำนวนข้อสอบเบื้องหลังล้มเหลว:", error);
@@ -956,6 +959,54 @@
                                 console.error("พื้นที่ก็ยังไม่พอ กรุณาเคลียร์แคชเบราว์เซอร์", retryError);
                             }
                         }
+                    }
+                }
+            };
+
+            // ✅ 1. เพิ่ม Helper Function สำหรับ Exponential Backoff
+            window.fetchWithBackoff = async function(docRef, maxRetries = 4, delay = 1000) {
+                for (let i = 0; i < maxRetries; i++) {
+                    try {
+                        const docSnap = await window.firebaseGetDoc(docRef);
+                        if (docSnap && docSnap.exists()) return docSnap;
+                        throw new Error("Document does not exist");
+                    } catch (error) {
+                        if (i === maxRetries - 1) throw error;
+                        console.warn(`[Backoff] รอบที่ ${i + 1} ขัดข้อง กำลังรอ ${delay}ms ก่อนลองใหม่...`, error);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                        delay *= 2; 
+                    }
+                }
+            };
+
+            // ✅ 2. เพิ่มระบบ Pre-fetching แอบโหลดข้อสอบล่วงหน้า
+            window.startPreFetchingExams = function(countsObj) {
+                if (!countsObj) return;
+                let delayIndex = 1;
+                for (const branch in countsObj) {
+                    const totalSets = parseInt(countsObj[branch]);
+                    if (isNaN(totalSets) || totalSets <= 0) continue;
+                    
+                    for (let i = 1; i <= totalSets; i++) {
+                        const docId = `${branch}_ชุดที่ ${i}`;
+                        // ถ้ามีในแคชแล้วข้ามไป
+                        if (localStorage.getItem('examCache_' + docId)) continue;
+
+                        // หน่วงเวลาการโหลดแต่ละชุดออกไป 1.5 วินาที เพื่อไม่ให้แย่งแบนด์วิธ
+                        setTimeout(async () => {
+                            try {
+                                const docRef = window.firebaseDoc(window.firebaseDB, "exam_papers", docId);
+                                // แอบดึงข้อมูลโดยใช้ Backoff เผื่อเบราว์เซอร์บล็อก
+                                const docSnap = await window.fetchWithBackoff(docRef, 3, 2000);
+                                if (docSnap && docSnap.exists()) {
+                                    window.safeCacheSave('examCache_' + docId, JSON.stringify(docSnap.data().questions));
+                                    console.log(`[Pre-fetch] ดาวน์โหลดข้อมูลล่วงหน้าสำเร็จ: ${docId}`);
+                                }
+                            } catch (err) {
+                                console.log(`[Pre-fetch] พักการโหลดล่วงหน้าสำหรับ: ${docId} (จะดึงสดเมื่อกดเริ่มสอบ)`);
+                            }
+                        }, delayIndex * 1500);
+                        delayIndex++;
                     }
                 }
             };
@@ -1109,48 +1160,60 @@
                 return { i: 0, name: 'วิชาอื่นๆ' };
             }
 
+            // ✅ 3. แก้ไขฟังก์ชันโหลดข้อสอบ ให้ใช้ Backoff และเน้นดึงจาก Cache
             async function fetchExamFromAPI(branch, setNum) {
-                const docId = `${branch}_${setNum}`; const loadingArea = document.getElementById('loadingArea'); loadingArea.style.display = 'flex';
-                const localCache = localStorage.getItem('examCache_' + docId);
+                const docId = `${branch}_${setNum}`; 
+                const loadingArea = document.getElementById('loadingArea'); 
+                loadingArea.style.display = 'flex';
+                document.getElementById('loadingText').innerText = 'กำลังจัดเตรียมข้อสอบ...';
                 
-                if (localCache) { document.getElementById('loadingText').innerText = 'กำลังเปิดข้อสอบจากความจำเครื่อง...'; setTimeout(() => { allQuestions = JSON.parse(localCache); initExamData(); loadingArea.style.display = 'none'; window.showToast("โหลดข้อสอบสำเร็จ", "success");}, 400); return; }
+                // ตรวจสอบ Cache ในเครื่องก่อนเป็นอันดับแรก (0 วินาที)
+                const localCache = localStorage.getItem('examCache_' + docId);
+                if (localCache) { 
+                    document.getElementById('loadingText').innerText = 'กำลังเปิดข้อสอบจากความจำเครื่อง...'; 
+                    setTimeout(() => { 
+                        allQuestions = JSON.parse(localCache); 
+                        initExamData(); 
+                        loadingArea.style.display = 'none'; 
+                        window.showToast("โหลดข้อสอบจากความจำเครื่องเรียบร้อย", "success");
+                    }, 400); 
+                    return; 
+                }
 
-                const maxRetries = 3; let currentAttempt = 0; const delayMs = 1500;
-                while (currentAttempt < maxRetries) {
-                    try {
-                        currentAttempt++;
-                        if (currentAttempt > 1) { document.getElementById('loadingText').innerHTML = `<span style="color:#b45309;">สัญญาณสะดุด กำลังเชื่อมต่อใหม่รอบที่ ${currentAttempt}/${maxRetries}...</span>`; } 
-                        else { document.getElementById('loadingText').innerText = 'กำลังดาวน์โหลดข้อสอบเข้าระบบ...'; }
+                // ถ้าไม่มีในเครื่อง (เช่นกดไวเกินไปก่อน Pre-fetch เสร็จ) ให้ดึงสดแบบมี Backoff
+                try {
+                    const docRef = window.firebaseDoc(window.firebaseDB, "exam_papers", docId); 
+                    const docSnap = await window.fetchWithBackoff(docRef);
 
-                        const docRef = window.firebaseDoc(window.firebaseDB, "exam_papers", docId); 
-                        let docSnap;
-
-                        try {
-                            docSnap = await window.firebaseGetDoc(docRef, { source: 'cache' });
-                        } catch (cacheError) {
-                            docSnap = await window.firebaseGetDoc(docRef, { source: 'server' });
+                    if (docSnap && docSnap.exists()) {
+                        allQuestions = docSnap.data().questions;
+                        if(allQuestions.length === 0) { 
+                            loadingArea.innerHTML = '<div style="color:#9B2C2C; font-weight:bold; font-size:18px; text-align:center; padding-top:40px;">ไม่พบข้อสอบในชุดนี้</div>'; 
+                            return; 
                         }
                         
-                        if (!docSnap) {
-                            docSnap = await window.firebaseGetDoc(docRef);
-                        }
-
-                        if (docSnap && docSnap.exists()) {
-                            allQuestions = docSnap.data().questions;
-                            if(allQuestions.length === 0) { loadingArea.innerHTML = '<div style="color:#9B2C2C; font-weight:bold; font-size:18px; text-align:center; padding-top:40px;">ไม่พบข้อสอบในชุดนี้</div>'; return; }
-                            
-                            window.safeCacheSave('examCache_' + docId, JSON.stringify(allQuestions)); 
-                            
-                            initExamData(); loadingArea.style.display = 'none'; window.showToast("โหลดข้อสอบสำเร็จ", "success");
-                        } else { loadingArea.innerHTML = `<div style="text-align:center; padding: 20px;"><div style="color:#0A192F; font-weight:900; font-size:22px; margin-bottom:10px;">กำลังเตรียมข้อสอบชุดนี้</div><div style="color:var(--text-muted); font-size:16px; margin-bottom:25px;">โปรดรอการอัปเดตจากผู้ดูแลระบบในภายหลัง</div><button onclick="promptBackToMenu()" class="btn-back" style="margin: 0 auto; display: block; padding: 12px 25px;">ย้อนกลับไปหน้าเมนู</button></div>`; }
-                        return;
-                    } catch (e) {
-                        if (currentAttempt >= maxRetries) {
-                            let errorTitle = "การเชื่อมต่อไม่เสถียร"; let errorMsg = "ระบบพยายามกู้คืนแล้วแต่ไม่สำเร็จ กรุณาตรวจสอบอินเทอร์เน็ตของคุณ";
-                            if (e.code === 'unavailable') { errorTitle = "สัญญาณอินเทอร์เน็ตขาดหาย"; errorMsg = "คุณกำลังอยู่ในโหมดออฟไลน์และยังไม่ได้ดาวน์โหลดชุดข้อสอบนี้ไว้ในเครื่อง"; } else if (e.code === 'permission-denied') { errorTitle = "ถูกปฏิเสธการเข้าถึง"; errorMsg = "คุณไม่มีสิทธิ์ดึงข้อมูลชุดข้อสอบนี้ กรุณาติดต่อแอดมิน"; }
-                            loadingArea.innerHTML = `<div style="text-align:center; padding: 20px;"><div style="color:#b45309; font-weight:900; font-size:22px; margin-bottom:10px;">${errorTitle}</div><div style="color:var(--text-muted); font-size:16px; margin-bottom:25px;">${errorMsg}</div><button onclick="promptBackToMenu()" class="btn-back" style="margin: 0 auto; display: block; padding: 12px 25px;">ย้อนกลับไปหน้าเมนู</button></div>`;
-                        } else { await new Promise(resolve => setTimeout(resolve, delayMs)); }
+                        window.safeCacheSave('examCache_' + docId, JSON.stringify(allQuestions)); 
+                        initExamData(); 
+                        loadingArea.style.display = 'none'; 
+                        window.showToast("ดาวน์โหลดข้อสอบสำเร็จ", "success");
                     }
+                } catch (e) {
+                    console.error("ดาวน์โหลดข้อสอบล้มเหลวหลังพยายามหลายครั้ง:", e); 
+                    let errorTitle = "การเชื่อมต่อถูกจำกัด"; 
+                    let errorMsg = "เบราว์เซอร์ปฏิเสธสัญญาณ หรืออินเทอร์เน็ตไม่เสถียร"; 
+                    
+                    if (e.code === 'permission-denied') { 
+                        errorTitle = "ถูกปฏิเสธการเข้าถึง"; 
+                        errorMsg = "คุณไม่มีสิทธิ์ดึงข้อมูลชุดข้อสอบนี้ กรุณาติดต่อแอดมิน"; 
+                    }
+                    
+                    loadingArea.innerHTML = `
+                        <div style="text-align:center; padding: 20px;">
+                            <div style="color:#b45309; font-weight:900; font-size:20px; margin-bottom:10px;">${errorTitle}</div>
+                            <div style="color:var(--text-muted); font-size:15px; margin-bottom:20px;">${errorMsg}</div>
+                            <button onclick="window.location.reload()" class="btn-submit" style="margin: 0 auto 10px; display: block; padding: 12px 25px; background: #0A192F;">🔄 โหลดหน้าเว็บใหม่เพื่อเริ่มอีกครั้ง</button>
+                            <button onclick="promptBackToMenu()" class="btn-back" style="margin: 0 auto; display: block; padding: 12px 25px;">ย้อนกลับไปหน้าเมนู</button>
+                        </div>`; 
                 }
             }
 
