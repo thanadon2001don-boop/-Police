@@ -529,14 +529,14 @@
         <div class="top-nav" id="topNav">
             <div class="nav-left">
                 <div class="brand-logo"><span class="police-text">Police</span> <span class="test-text">- Test</span></div>
-                <button class="btn-history" id="btnHistoryNav" onclick="showHistory()">ประวัติการสอบ</button>
+                <button class="btn-history" id="btnHistoryNav" onclick="window.showHistory()">ประวัติการสอบ</button>
             </div>
             <div class="user-nav">
                 <div class="user-profile-badge">
                     <div class="user-avatar" id="navUserAvatar">P</div>
                     <span class="user-name" id="navUserEmail">กำลังโหลด...</span>
                 </div>
-                <button class="btn-logout" onclick="confirmLogout()">ออกจากระบบ</button>
+                <button class="btn-logout" onclick="window.confirmLogout()">ออกจากระบบ</button>
             </div>
         </div>
 
@@ -546,19 +546,19 @@
                 <div class="menu-subtitle">เลือกสายงานวิชาที่ต้องการทดสอบ</div>
             </div>
             <div class="branch-container">
-                <div class="branch-card" onclick="showTestSelection('สายปราบปราม (นสต.)')">
+                <div class="branch-card" onclick="window.showTestSelection('สายปราบปราม (นสต.)')">
                     <div class="branch-name">สายปราบปราม</div>
                     <div class="branch-desc">อัตราแข่งขัน 1:15 ถึง 1:25<br>เป้าหมายคะแนน: 70% ขึ้นไป</div>
                 </div>
-                <div class="branch-card" onclick="showTestSelection('สายอำนวยการ (อก.)')">
+                <div class="branch-card" onclick="window.showTestSelection('สายอำนวยการ (อก.)')">
                     <div class="branch-name">สายอำนวยการ</div>
                     <div class="branch-desc">อัตราแข่งขัน 1:100 ขึ้นไป<br>เป้าหมายคะแนน: 83% ขึ้นไป</div>
                 </div>
-                <div class="branch-card" onclick="showTestSelection('สายตรวจคนเข้าเมือง (ตม.)')">
+                <div class="branch-card" onclick="window.showTestSelection('สายตรวจคนเข้าเมือง (ตม.)')">
                     <div class="branch-name">สายตรวจคนเข้าเมือง</div>
                     <div class="branch-desc">อัตราแข่งขัน 1:50 ถึง 1:80<br>เป้าหมายคะแนน: 76% ขึ้นไป</div>
                 </div>
-                <div class="branch-card" onclick="showTestSelection('สายพิสูจน์หลักฐาน (พฐ.)')">
+                <div class="branch-card" onclick="window.showTestSelection('สายพิสูจน์หลักฐาน (พฐ.)')">
                     <div class="branch-name">สายพิสูจน์หลักฐาน</div>
                     <div class="branch-desc">อัตราแข่งขันสูงถึง 1:900<br>เป้าหมายคะแนน: 73% ขึ้นไป</div>
                 </div>
@@ -568,7 +568,7 @@
         <div id="testSelectionMenu">
             <div class="test-selection-header">
                 <h2 class="test-selection-title">เลือกชุดข้อสอบ</h2>
-                <button class="btn-back" onclick="backToMainMenuFromSelection()">กลับหน้าหลัก</button>
+                <button class="btn-back" onclick="window.backToMainMenuFromSelection()">กลับหน้าหลัก</button>
             </div>
             <div class="test-grid" id="testGrid"></div>
         </div>
@@ -576,7 +576,7 @@
         <div id="historyInterface">
             <div class="history-header">
                 <h2 class="history-title">ประวัติการทดสอบของคุณ</h2>
-                <button class="btn-back" onclick="backToMainMenuFromHistory()">กลับหน้าหลัก</button>
+                <button class="btn-back" onclick="window.backToMainMenuFromHistory()">กลับหน้าหลัก</button>
             </div>
             <div id="historyContainer"></div>
         </div>
@@ -593,8 +593,8 @@
             <div class="main-content">
                 <div class="top-bar">
                     <div class="top-bar-left" style="display: flex; align-items: center; gap: 15px;">
-                        <button class="btn-back" id="btnExamBack" onclick="promptBackToMenu()">ย้อนกลับ</button>
-                        <button class="btn-back" id="btnReviewBack" onclick="exitReviewMode()" style="display:none;">กลับหน้าประวัติ</button>
+                        <button class="btn-back" id="btnExamBack" onclick="window.promptBackToMenu()">ย้อนกลับ</button>
+                        <button class="btn-back" id="btnReviewBack" onclick="window.exitReviewMode()" style="display:none;">กลับหน้าประวัติ</button>
                         
                         <div id="titleContainer" style="display: flex; align-items: center; gap: 12px;">
                             <h2 class="subject-title" id="reviewModeBadge" style="display:none; color:#0A192F; font-weight: 900; align-items: center; gap: 10px; font-size: 16px; margin: 0;">
@@ -633,9 +633,9 @@
                     <div class="exam-area" id="examArea">
                         <div id="singleQuestionContainer"></div>
                         <div class="q-controls" id="qControls" style="display: none;">
-                            <button class="btn-nav btn-nav-prev" id="btnPrev" onclick="navPrevQ()">ก่อนหน้า</button>
-                            <button class="btn-nav btn-nav-mark" id="btnMark" onclick="toggleMarkCurrentQ()">ปักหมุดข้อนี้</button>
-                            <button class="btn-nav btn-nav-next" id="btnNext" onclick="navNextQ()">ถัดไป</button>
+                            <button class="btn-nav btn-nav-prev" id="btnPrev" onclick="window.navPrevQ()">ก่อนหน้า</button>
+                            <button class="btn-nav btn-nav-mark" id="btnMark" onclick="window.toggleMarkCurrentQ()">ปักหมุดข้อนี้</button>
+                            <button class="btn-nav btn-nav-next" id="btnNext" onclick="window.navNextQ()">ถัดไป</button>
                         </div>
                     </div>
                     
@@ -649,8 +649,8 @@
                 </div>
 
                 <div class="submit-area" id="submitArea">
-                    <button class="btn-clear" onclick="promptResetExam()">🔄 ล้างข้อมูลและเริ่มใหม่</button>
-                    <button class="btn-submit" id="btnSubmitExam" onclick="promptSubmitExam()">💾 ส่งข้อสอบ (ประมวลผล)</button>
+                    <button class="btn-clear" onclick="window.promptResetExam()">🔄 ล้างข้อมูลและเริ่มใหม่</button>
+                    <button class="btn-submit" id="btnSubmitExam" onclick="window.promptSubmitExam()">💾 ส่งข้อสอบ (ประมวลผล)</button>
                 </div>
             </div>
         </div>
@@ -689,7 +689,7 @@
             <h3 class="modal-title" id="modalTitle">แจ้งเตือน</h3>
             <p class="modal-message" id="modalMessage">ข้อความ</p>
             <div class="modal-actions">
-                <button class="modal-btn modal-btn-cancel" id="modalBtnCancel" onclick="closeModal()">ยกเลิก</button>
+                <button class="modal-btn modal-btn-cancel" id="modalBtnCancel" onclick="window.closeModal()">ยกเลิก</button>
                 <button class="modal-btn modal-btn-confirm" id="modalBtnConfirm">ตกลง</button>
             </div>
         </div>
@@ -700,7 +700,7 @@
             <h3 style="margin-top:0; color:#0A192F; font-weight:900;">ตรวจสอบใบรายงานผล</h3>
             <div class="preview-image-container" id="previewContainer"></div>
             <div class="modal-actions">
-                <button class="modal-btn modal-btn-cancel" onclick="closePreview()">ยกเลิก</button>
+                <button class="modal-btn modal-btn-cancel" onclick="window.closePreview()">ยกเลิก</button>
                 <button class="modal-btn modal-btn-confirm" id="btnDownloadConfirm">📥 ยืนยันดาวน์โหลด</button>
             </div>
         </div>
@@ -711,8 +711,8 @@
             <h3 class="modal-title">ยืนยันการออกจากระบบ</h3>
             <p class="modal-message">คุณต้องการออกจากระบบใช่หรือไม่?</p>
             <div class="modal-actions">
-                <button class="modal-btn modal-btn-cancel" onclick="closeLogoutModal()">ยกเลิก</button>
-                <button class="modal-btn modal-btn-confirm" onclick="executeLogout()">ตกลง</button>
+                <button class="modal-btn modal-btn-cancel" onclick="window.closeLogoutModal()">ยกเลิก</button>
+                <button class="modal-btn modal-btn-confirm" onclick="window.executeLogout()">ตกลง</button>
             </div>
         </div>
     </div>
@@ -841,7 +841,7 @@
                             else localStorage.setItem('systemExamCountsCache', JSON.stringify(snap.data()));
                             
                             if (document.getElementById('testSelectionMenu').style.display === 'flex' && window.activeBranchForSelection) {
-                                renderTestButtons(window.activeBranchForSelection, window.systemExamCounts[window.activeBranchForSelection], document.getElementById('testGrid'));
+                                window.renderTestButtons(window.activeBranchForSelection, window.systemExamCounts[window.activeBranchForSelection], document.getElementById('testGrid'));
                             }
                         }
                     }, (error) => {
@@ -999,25 +999,17 @@
             window.showConfirm = function(title, msg, btnText, btnClass, callback, showCancel=true) {
                 document.getElementById('modalTitle').innerText = title; document.getElementById('modalMessage').innerHTML = msg;
                 const btn = document.getElementById('modalBtnConfirm'); btn.innerHTML = btnText; btn.className = `modal-btn ${btnClass}`;
-                btn.onclick = () => { closeModal(); if(callback) callback(); };
+                btn.onclick = () => { window.closeModal(); if(callback) callback(); };
                 document.getElementById('modalBtnCancel').style.display = showCancel ? 'inline-block' : 'none';
                 document.getElementById('customModal').style.display = 'flex'; setTimeout(() => { document.getElementById('customModal').classList.add('show'); }, 10);
             }
 
-            window.systemExamCounts = null; 
-
-            function saveExamState() {
-                if(isReviewMode || !activeTestName) return;
-                const state = {
-                    answers: userAnswers,
-                    marked: markedQuestions,
-                    timeLeft: totalSeconds
-                };
-                window.safeCacheSave(`exam_state_${currentBranch}_${currentTestName}`, JSON.stringify(state));
-            }
-
+            // ==========================================
+            // จุดที่แก้ไข 1: ฟังก์ชันเลือกสายสอบ (หน้าหลัก)
+            // ==========================================
             window.activeBranchForSelection = null;
-            function showTestSelection(branchName) {
+            window.showTestSelection = function(branchName) {
+                
                 window.activeBranchForSelection = branchName;
                 currentBranch = branchName; 
                 document.getElementById('mainMenu').style.display = 'none'; 
@@ -1027,24 +1019,25 @@
                 
                 const grid = document.getElementById('testGrid'); 
 
+                // เช็คว่าระบบหลังบ้านดึงข้อมูลเสร็จหรือยัง
                 if (window.systemExamCounts && window.systemExamCounts[branchName] !== undefined) {
-                    renderTestButtons(branchName, window.systemExamCounts[branchName], grid);
+                    window.renderTestButtons(branchName, window.systemExamCounts[branchName], grid);
                 } else {
                     const cachedCounts = localStorage.getItem('systemExamCountsCache');
                     if (cachedCounts) {
                         window.systemExamCounts = JSON.parse(cachedCounts);
-                        renderTestButtons(branchName, window.systemExamCounts[branchName], grid);
+                        window.renderTestButtons(branchName, window.systemExamCounts[branchName], grid);
                     } else {
                         grid.innerHTML = `
                             <div style="width: 100%; text-align: center; grid-column: 1 / -1; padding: 40px 0;">
                                 <div class="spinner" style="border-top-color: #991b1b; width: 30px; height: 30px; border-width: 3px; margin: 0 auto 15px;"></div>
-                                <div style="color: #0A192F; font-weight: bold;">กำลังซิงค์ข้อมูลจากเซิร์ฟเวอร์ครั้งแรก...</div>
+                                <div style="color: #0A192F; font-weight: bold;">กำลังซิงค์ข้อมูลจากเซิร์ฟเวอร์...</div>
                             </div>`;
                     }
                 }
-            }
+            };
 
-            function renderTestButtons(branchName, countValue, grid) {
+            window.renderTestButtons = function(branchName, countValue, grid) {
                 let totalSets = parseInt(countValue || 0);
                 grid.innerHTML = '';
                 
@@ -1058,15 +1051,22 @@
                     let tName = 'ชุดที่ ' + i; 
                     let isActive = (activeBranch === branchName && activeTestName === tName);
                     htmlContent += `
-                    <div class="test-card ${isActive ? 'in-progress' : ''}" onclick="enterExam('${tName}')">
+                    <div class="test-card ${isActive ? 'in-progress' : ''}" onclick="window.enterExam('${tName}')">
                         <div class="test-card-title">Test - ${tName}</div>
                         <div class="test-card-meta">${isActive ? 'กำลังทำค้างไว้' : 'คลิกเพื่อเริ่มสอบ'}</div>
                     </div>`;
                 }
                 grid.innerHTML = htmlContent;
-            }
+            };
 
-            function backToMainMenuFromSelection() { document.getElementById('testSelectionMenu').style.display = 'none'; document.getElementById('mainMenu').style.display = 'flex'; document.getElementById('btnHistoryNav').style.display = 'flex'; }
+            // ==========================================
+            // จุดที่แก้ไข 2: ฟังก์ชันกลับหน้าหลัก
+            // ==========================================
+            window.backToMainMenuFromSelection = function() { 
+                document.getElementById('testSelectionMenu').style.display = 'none'; 
+                document.getElementById('mainMenu').style.display = 'flex'; 
+                document.getElementById('btnHistoryNav').style.display = 'flex'; 
+            };
 
             function purgeEntireExamState() {
                 if (currentBranch && currentTestName) { localStorage.removeItem(`exam_state_${currentBranch}_${currentTestName}`); }
@@ -1078,14 +1078,17 @@
                 document.getElementById('singleQuestionContainer').innerHTML = ''; document.getElementById('smartGrid').innerHTML = '';
             }
 
-            async function enterExam(testName) {
+            // ==========================================
+            // จุดที่แก้ไข 3: ฟังก์ชันกดเข้าชุดข้อสอบ
+            // ==========================================
+            window.enterExam = async function(testName) {
                 if (activeTestName !== null && (activeBranch !== currentBranch || activeTestName !== testName)) {
                     window.showConfirm('เปลี่ยนชุดข้อสอบ?', `คุณกำลังทำ <b>${sanitizeHTML(activeBranch)} (Test - ${sanitizeHTML(activeTestName)})</b> ค้างไว้ <br>หากเริ่มชุดใหม่ ข้อมูลที่ทำค้างไว้จะถูกลบ`, '🔄 ล้างข้อมูลและเริ่มใหม่', 'modal-btn-confirm', () => { purgeEntireExamState(); startNewExamSession(testName); }, true);
                     return;
                 }
                 if (activeTestName === testName && activeBranch === currentBranch) { startNewExamSession(testName, false); return; }
                 purgeEntireExamState(); startNewExamSession(testName, true);
-            }
+            };
 
             async function startNewExamSession(testName, isFreshStart = true) {
                 currentTestName = testName; activeBranch = currentBranch; activeTestName = currentTestName; isReviewMode = false;
@@ -1100,7 +1103,7 @@
 
             function renderSidebarSyllabus(branch) {
                 const menuList = document.getElementById('sidebarMenuList'); menuList.innerHTML = ''; const syllabus = examSyllabus[branch]; if(!syllabus) return; let startQ = 1;
-                syllabus.forEach((sub, i) => { const isActive = i === 0 ? 'active' : ''; menuList.insertAdjacentHTML('beforeend', `<div class="menu-item ${isActive}" id="menu-subj-${i}" onclick="jumpToQuestion(${startQ - 1})"><span class="subject-text">${i+1}. ${sanitizeHTML(sub.name)}</span><span class="badge">${sub.count} ข้อ</span></div>`); startQ += sub.count; });
+                syllabus.forEach((sub, i) => { const isActive = i === 0 ? 'active' : ''; menuList.insertAdjacentHTML('beforeend', `<div class="menu-item ${isActive}" id="menu-subj-${i}" onclick="window.jumpToQuestion(${startQ - 1})"><span class="subject-text">${i+1}. ${sanitizeHTML(sub.name)}</span><span class="badge">${sub.count} ข้อ</span></div>`); startQ += sub.count; });
             }
 
             function getSubjectInfo(index) {
@@ -1109,40 +1112,34 @@
                 return { i: 0, name: 'วิชาอื่นๆ' };
             }
 
-            // ==========================================
-            // จุดที่แก้ไข: ถอดของเก่าทิ้ง และใส่ตัวดึงข้อมูลผ่าน CDN (REST API)
-            // ==========================================
             async function fetchExamFromAPI(branch, setNum) {
-                // เปลี่ยนรูปแบบ ID ให้ตรงกับชื่อไฟล์ JSON บน Firebase Hosting
                 let docId = "";
-                if(branch.includes("ปราบปราม")) docId = `prap-pram-set${setNum}`;
-                else if(branch.includes("อำนวยการ")) docId = `aum-nuay-set${setNum}`;
-                else if(branch.includes("ตรวจคนเข้าเมือง")) docId = `tm-set${setNum}`;
-                else if(branch.includes("พิสูจน์หลักฐาน")) docId = `pt-set${setNum}`;
+                if (branch.includes("ปราบปราม")) docId = `prap-pram-set${setNum}`;
+                else if (branch.includes("อำนวยการ")) docId = `aum-nuay-set${setNum}`;
+                else if (branch.includes("ตรวจคนเข้าเมือง")) docId = `tm-set${setNum}`;
+                else if (branch.includes("พิสูจน์หลักฐาน")) docId = `pt-set${setNum}`;
                 else docId = `unknown-set${setNum}`;
-                
-                const loadingArea = document.getElementById('loadingArea'); 
+
+                const loadingArea = document.getElementById('loadingArea');
                 loadingArea.style.display = 'flex';
                 const cacheKey = 'examCache_' + docId;
                 const localCache = localStorage.getItem(cacheKey);
-                
-                // 1. ถ้าเครื่องผู้ใช้เคยโหลดมาแล้ว ดึงมาใช้ได้เลย 0 วินาที
-                if (localCache) { 
-                    document.getElementById('loadingText').innerText = 'กำลังเปิดข้อสอบจากความจำเครื่อง...'; 
-                    setTimeout(() => { 
-                        allQuestions = JSON.parse(localCache); 
-                        initExamData(); 
-                        loadingArea.style.display = 'none'; 
+
+                if (localCache) {
+                    document.getElementById('loadingText').innerText = 'กำลังเปิดข้อสอบจากความจำเครื่อง...';
+                    setTimeout(() => {
+                        allQuestions = JSON.parse(localCache);
+                        initExamData();
+                        loadingArea.style.display = 'none';
                         window.showToast("โหลดข้อสอบสำเร็จ (Offline Mode)", "success");
-                    }, 400); 
-                    return; 
+                    }, 400);
+                    return;
                 }
 
                 document.getElementById('loadingText').innerText = 'กำลังดาวน์โหลดข้อสอบความเร็วสูง...';
 
-                // 2. ถ้ายังไม่เคยโหลด ให้วิ่งไปดึงไฟล์จาก Firebase CDN
-                const url = `https://police-testv1.web.app/exams/${docId}.json`; 
-                
+                const url = `https://police-testv1.web.app/exams/${docId}.json`;
+
                 try {
                     const response = await fetch(url, {
                         method: 'GET',
@@ -1150,38 +1147,35 @@
                             'Cache-Control': 'no-cache'
                         }
                     });
-                    
+
                     if (!response.ok) {
                         throw new Error(`ไม่พบไฟล์ข้อสอบชุดนี้ (Status: ${response.status})`);
                     }
-                    
+
                     const examData = await response.json();
-                    
-                    // ตรวจสอบโครงสร้างไฟล์ JSON 
+
                     if (examData && examData.questions && examData.questions.length > 0) {
                         allQuestions = examData.questions;
-                        
-                        // 3. เซฟเก็บลงเครื่องเผื่อใช้คราวหลังแบบออฟไลน์
-                        window.safeCacheSave(cacheKey, JSON.stringify(allQuestions)); 
-                        
-                        initExamData(); 
-                        loadingArea.style.display = 'none'; 
+
+                        window.safeCacheSave(cacheKey, JSON.stringify(allQuestions));
+
+                        initExamData();
+                        loadingArea.style.display = 'none';
                         window.showToast("โหลดข้อสอบสำเร็จ", "success");
                     } else {
                         throw new Error("ไฟล์ข้อสอบมีรูปแบบไม่ถูกต้อง");
                     }
-                    
+
                 } catch (e) {
                     console.error("การเชื่อมต่อผ่าน CDN ล้มเหลว:", e);
                     loadingArea.innerHTML = `
                         <div style="text-align:center; padding: 20px;">
                             <div style="color:#b45309; font-weight:900; font-size:22px; margin-bottom:10px;">เกิดข้อผิดพลาดในการดึงข้อสอบ</div>
                             <div style="color:var(--text-muted); font-size:16px; margin-bottom:25px;">${e.message}<br>โปรดตรวจสอบอินเทอร์เน็ตหรือรอการอัปเดตไฟล์จากแอดมิน</div>
-                            <button onclick="promptBackToMenu()" class="btn-back" style="margin: 0 auto; display: block; padding: 12px 25px;">ย้อนกลับไปหน้าเมนู</button>
+                            <button onclick="window.promptBackToMenu()" class="btn-back" style="margin: 0 auto; display: block; padding: 12px 25px;">ย้อนกลับไปหน้าเมนู</button>
                         </div>`;
                 }
             }
-            // ==========================================
 
             function initExamData() { 
                 const savedState = localStorage.getItem(`exam_state_${currentBranch}_${currentTestName}`);
@@ -1201,7 +1195,7 @@
 
             function buildSmartGrid() {
                 const grid = document.getElementById('smartGrid'); grid.innerHTML = ''; const fragment = document.createDocumentFragment(); const total = isReviewMode ? reviewRecord.questions.length : allQuestions.length;
-                for(let i=0; i<total; i++) { const circle = document.createElement('div'); circle.className = 'q-circle'; circle.id = `grid-circle-${i}`; circle.innerText = i + 1; circle.onclick = () => jumpToQuestion(i); fragment.appendChild(circle); }
+                for(let i=0; i<total; i++) { const circle = document.createElement('div'); circle.className = 'q-circle'; circle.id = `grid-circle-${i}`; circle.innerText = i + 1; circle.onclick = () => window.jumpToQuestion(i); fragment.appendChild(circle); }
                 grid.appendChild(fragment); updateGridProgress();
             }
 
@@ -1223,7 +1217,6 @@
                 let html = `<div class="question-card"><div class="question-header"><span class="question-number-badge">ข้อที่ ${qNum} จาก ${totalQ}</span><span class="question-subject-badge">${sanitizeHTML(subj.name)}</span></div><div class="question-text">${sanitizeHTML(q.question)}</div>`;
                 
                 ['a','b','c','d'].forEach(choice => {
-                    // ปรับลอจิกให้รองรับชื่อฟิลด์จากไฟล์ JSON (options) 
                     let choiceText = "";
                     if (q.options && q.options.length === 4) {
                         choiceText = choice === 'a' ? q.options[0] : choice === 'b' ? q.options[1] : choice === 'c' ? q.options[2] : q.options[3];
@@ -1234,7 +1227,7 @@
                     let choiceLabel = choice === 'a' ? 'ก' : choice === 'b' ? 'ข' : choice === 'c' ? 'ค' : 'ง';
                     let isSelected = (userAns === choice); let classAttr = 'choice-label' + (isSelected && !isReviewMode ? ' selected' : '');
                     if(isReviewMode) { if(choice === cor) classAttr += ' correct'; else if(isSelected && !isCorrect) classAttr += ' incorrect'; }
-                    html += `<label class="${classAttr}"><input type="radio" name="currentQ" value="${choice}" onchange="selectAnswer('${choice}')" ${isSelected ? 'checked' : ''} ${isReviewMode ? 'disabled' : ''}><span>${choiceLabel}. ${sanitizeHTML(choiceText)}</span></label>`;
+                    html += `<label class="${classAttr}"><input type="radio" name="currentQ" value="${choice}" onchange="window.selectAnswer('${choice}')" ${isSelected ? 'checked' : ''} ${isReviewMode ? 'disabled' : ''}><span>${choiceLabel}. ${sanitizeHTML(choiceText)}</span></label>`;
                 });
 
                 if (isReviewMode) {
@@ -1266,8 +1259,14 @@
                 
                 saveExamState();
                 
-                setTimeout(() => { if (currentQIndex < allQuestions.length - 1) jumpToQuestion(currentQIndex + 1); }, 150);
+                setTimeout(() => { if (currentQIndex < allQuestions.length - 1) window.jumpToQuestion(currentQIndex + 1); }, 150);
             };
+
+            function saveExamState() {
+                if(isReviewMode || examSubmitted) return;
+                const state = { answers: userAnswers, marked: markedQuestions, timeLeft: totalSeconds, timestamp: Date.now() };
+                localStorage.setItem(`exam_state_${currentBranch}_${currentTestName}`, JSON.stringify(state));
+            }
 
             window.toggleMarkCurrentQ = function() {
                 markedQuestions[currentQIndex] = !markedQuestions[currentQIndex]; const btn = document.getElementById('btnMark'); const gridCell = document.getElementById(`grid-circle-${currentQIndex}`);
@@ -1276,7 +1275,9 @@
                 saveExamState();
             };
 
-            window.jumpToQuestion = function(index) { currentQIndex = index; renderSingleQuestion(index); }; window.navPrevQ = function() { if(currentQIndex > 0) jumpToQuestion(currentQIndex - 1); }; window.navNextQ = function() { const t = isReviewMode ? reviewRecord.questions.length : allQuestions.length; if(currentQIndex < t - 1) jumpToQuestion(currentQIndex + 1); };
+            window.jumpToQuestion = function(index) { currentQIndex = index; renderSingleQuestion(index); }; 
+            window.navPrevQ = function() { if(currentQIndex > 0) window.jumpToQuestion(currentQIndex - 1); }; 
+            window.navNextQ = function() { const t = isReviewMode ? reviewRecord.questions.length : allQuestions.length; if(currentQIndex < t - 1) window.jumpToQuestion(currentQIndex + 1); };
 
             function updateGridProgress() { if(isReviewMode) return; const answeredCount = userAnswers.filter(a => a !== null).length; document.getElementById('gridProgressText').innerText = `ทำแล้ว ${answeredCount}/${allQuestions.length}`; }
 
@@ -1299,18 +1300,61 @@
                 }, 1000);
             }
 
-            function promptBackToMenu() {
-                if (isTimerRunning) { window.showConfirm('พักการสอบ?', 'พักเวลาไว้และย้อนกลับ', 'ตกลง', 'modal-btn-confirm', () => { document.getElementById('examInterface').style.display = 'none'; showTestSelection(currentBranch); document.getElementById('topNav').style.display = 'flex'; clearInterval(timerInterval); isTimerRunning = false; document.getElementById('timerBox').classList.remove('running'); document.getElementById('timerStatus').innerText = "พักการสอบ (รอทำต่อ)"; document.getElementById('timerStatus').style.color = "var(--text-muted)"; window.showToast("พักการทำข้อสอบไว้ให้แล้ว", "info");}); } 
-                else { window.showConfirm('ย้อนกลับ', 'ย้อนกลับไปหน้าเลือกชุดข้อสอบ', 'ตกลง', 'modal-btn-confirm', () => { purgeEntireExamState(); document.getElementById('examInterface').style.display = 'none'; showTestSelection(currentBranch); document.getElementById('topNav').style.display = 'flex'; }); }
-            }
+            // ==========================================
+            // จุดที่แก้ไข 4: ฟังก์ชันปุ่มย้อนกลับ (ขณะทำข้อสอบ)
+            // ==========================================
+            window.promptBackToMenu = function() {
+                if (isTimerRunning) { 
+                    window.showConfirm('พักการสอบ?', 'พักเวลาไว้และย้อนกลับ', 'ตกลง', 'modal-btn-confirm', () => { 
+                        document.getElementById('examInterface').style.display = 'none'; 
+                        window.showTestSelection(currentBranch); 
+                        document.getElementById('topNav').style.display = 'flex'; 
+                        clearInterval(timerInterval); 
+                        isTimerRunning = false; 
+                        document.getElementById('timerBox').classList.remove('running'); 
+                        document.getElementById('timerStatus').innerText = "พักการสอบ (รอทำต่อ)"; 
+                        document.getElementById('timerStatus').style.color = "var(--text-muted)"; 
+                        window.showToast("พักการทำข้อสอบไว้ให้แล้ว", "info");
+                    }); 
+                } 
+                else { 
+                    window.showConfirm('ย้อนกลับ', 'ย้อนกลับไปหน้าเลือกชุดข้อสอบ', 'ตกลง', 'modal-btn-confirm', () => { 
+                        purgeEntireExamState(); 
+                        document.getElementById('examInterface').style.display = 'none'; 
+                        window.showTestSelection(currentBranch); 
+                        document.getElementById('topNav').style.display = 'flex'; 
+                    }); 
+                }
+            };
 
-            function promptResetExam() { window.showConfirm('เริ่มใหม่', 'ล้างคำตอบและเริ่มเวลาใหม่?', '🔄 ล้างข้อมูล', 'modal-btn-confirm', () => { userAnswers.fill(null); markedQuestions.fill(false); document.querySelectorAll('.q-circle').forEach(c => c.className = 'q-circle'); updateGridProgress(); purgeEntireExamState(); startNewExamSession(currentTestName); window.showToast("ล้างข้อมูลการสอบเรียบร้อย", "info");}); }
+            // ==========================================
+            // จุดที่แก้ไข 5: ฟังก์ชันล้างข้อมูลและเริ่มทำใหม่
+            // ==========================================
+            window.promptResetExam = function() { 
+                window.showConfirm('เริ่มใหม่', 'ล้างคำตอบและเริ่มเวลาใหม่?', '🔄 ล้างข้อมูล', 'modal-btn-confirm', () => { 
+                    userAnswers.fill(null); 
+                    markedQuestions.fill(false); 
+                    document.querySelectorAll('.q-circle').forEach(c => c.className = 'q-circle'); 
+                    updateGridProgress(); 
+                    purgeEntireExamState(); 
+                    startNewExamSession(currentTestName); 
+                    window.showToast("ล้างข้อมูลการสอบเรียบร้อย", "info");
+                }); 
+            };
 
-            function promptSubmitExam() { 
-                const totalQ = allQuestions.length; if (totalQ === 0) return; const answeredCount = userAnswers.filter(a => a !== null).length;
-                if (answeredCount < totalQ) { window.showConfirm('ส่งข้อสอบทั้งที่ทำไม่ครบ?', `คุณทำไป <b>${answeredCount}</b> จาก <b>${totalQ}</b> ข้อ <br>ข้อที่ไม่ได้ตอบจะถือว่าผิด ยืนยันการส่ง?`, '💾 ส่งข้อสอบ', 'modal-btn-confirm', processScoreAndShowHistory); return; }
+            // ==========================================
+            // จุดที่แก้ไข 6: ฟังก์ชันส่งข้อสอบ
+            // ==========================================
+            window.promptSubmitExam = function() { 
+                const totalQ = allQuestions.length; 
+                if (totalQ === 0) return; 
+                const answeredCount = userAnswers.filter(a => a !== null).length;
+                if (answeredCount < totalQ) { 
+                    window.showConfirm('ส่งข้อสอบทั้งที่ทำไม่ครบ?', `คุณทำไป <b>${answeredCount}</b> จาก <b>${totalQ}</b> ข้อ <br>ข้อที่ไม่ได้ตอบจะถือว่าผิด ยืนยันการส่ง?`, '💾 ส่งข้อสอบ', 'modal-btn-confirm', processScoreAndShowHistory); 
+                    return; 
+                }
                 window.showConfirm('ส่งข้อสอบ', 'ระบบจะประมวลผลทันที', '💾 ส่งข้อสอบ', 'modal-btn-confirm', processScoreAndShowHistory); 
-            }
+            };
 
             async function processScoreAndShowHistory() {
                 const submitBtn = document.getElementById('btnSubmitExam'); submitBtn.disabled = true; submitBtn.innerText = "กำลังบันทึก..."; examSubmitted = true; clearInterval(timerInterval); isTimerRunning = false;
@@ -1322,12 +1366,11 @@
                 const safeEmail = String(window.currentUserEmail).toLowerCase().trim();
                 const historyRecord = { userEmail: safeEmail, branch: currentBranch, testName: currentTestName, date: dateStr, questions: JSON.parse(JSON.stringify(allQuestions)), userChoices: userAnswers, totalScore: total, totalQuestions: allQuestions.length, percent: percent, isPass: isPass, passThreshold: passThreshold, syllabus: syllabus, subScores: subScores, timestamp: window.firebaseServerTimestamp() };
 
-                try { await window.firebaseAddDoc(window.firebaseCollection(window.firebaseDB, "exam_history"), historyRecord); window.examHistoryLog.unshift(historyRecord); window.renderHistoryList(); showHistory(); window.showToast("บันทึกผลสอบเรียบร้อย", "success");}
+                try { await window.firebaseAddDoc(window.firebaseCollection(window.firebaseDB, "exam_history"), historyRecord); window.examHistoryLog.unshift(historyRecord); window.renderHistoryList(); window.showHistory(); window.showToast("บันทึกผลสอบเรียบร้อย", "success");}
                 catch (error) { window.showConfirm('ผิดพลาด', 'บันทึกไม่สำเร็จ', 'ตกลง', 'modal-btn-confirm', null, false); }
                 finally { submitBtn.disabled = false; submitBtn.innerHTML = "💾 ส่งข้อสอบ (ประมวลผล)"; purgeEntireExamState(); }
             }
 
-            // --- 6. อัปเดตฟังก์ชันดึงประวัติเพื่อรองรับ Hardcore Pagination ---
             window.loadHistoryFromFirebase = async function(email) {
                 if (!email) return;
                 const safeEmail = String(email).toLowerCase().trim();
@@ -1348,7 +1391,7 @@
                         window.firebaseCollection(window.firebaseDB, "exam_history"),
                         window.firebaseWhere("userEmail", "==", safeEmail),
                         window.firebaseOrderBy("timestamp", "desc"),
-                        window.firebaseLimit(20) // โหลดมาแค่ 20 รายการแรกก่อน
+                        window.firebaseLimit(20)
                     );
 
                     window.historyUnsubscribe = window.firebaseOnSnapshot(q, (querySnapshot) => {
@@ -1361,11 +1404,9 @@
                         if (window.examHistoryLog.length <= 20) {
                             window.examHistoryLog = freshHistoryLog;
                         } else {
-                            // หากมีการโหลดข้อมูลเก่าไปแล้ว ให้อัปเดตเฉพาะ 20 รายการบนสุดเพื่อรักษาข้อมูลเก่าไว้
                             window.examHistoryLog.splice(0, freshHistoryLog.length, ...freshHistoryLog);
                         }
 
-                        // Hardcore Optimization: เซฟลงเครื่องแค่ 20 รายการแรก เพื่อป้องกัน LocalStorage แคชเต็ม (5MB Limit)
                         localStorage.setItem(cacheKey, JSON.stringify(freshHistoryLog)); 
                         
                         if (document.getElementById('historyInterface').style.display === 'flex') {
@@ -1380,7 +1421,6 @@
                 }
             };
 
-            // --- 7. เพิ่มฟังก์ชัน Load More ประวัติสอบสำหรับดึงข้อมูลชุดถัดไป ---
             window.loadMoreHistory = async function() {
                 if(window.isFetchingHistory || !window.hasMoreHistory || !window.lastHistoryDoc) return;
                 window.isFetchingHistory = true;
@@ -1423,7 +1463,6 @@
                 }
             };
 
-            // --- 8. อัปเดต Render ให้รองรับระบบ Load More ได้นุ่มนวล ---
             window.renderHistoryList = function() {
                 const container = document.getElementById('historyContainer');
                 if (!container) return;
@@ -1445,121 +1484,147 @@
                         const payload = encodeURIComponent(JSON.stringify({ syllabus: record.syllabus, scores: record.subScores })); 
                         const targetPercent = record.passThreshold || getPassingThreshold(record.branch); 
                         const isPassText = record.isPass ? "ผ่านเกณฑ์" : "ไม่ผ่านเกณฑ์";
-                        const html = `<div class="history-card"><div class="history-status-bar ${record.isPass?'green':'red'}"></div><div class="history-content"><div class="history-info"><h3>${sanitizeHTML(record.branch)}</h3><div class="history-test-name">Test - ${sanitizeHTML(record.testName)}</div><div class="history-date">${sanitizeHTML(record.date)}</div><div class="target-badge ${record.isPass?'':'fail'}">เป้าหมาย: ${targetPercent}% ขึ้นไป (${isPassText})</div></div><div class="history-action-area"><div class="history-score"><div class="score-circle ${record.isPass?'green':'red'}"><span class="score-percent">${record.percent}%</span></div><div class="score-raw">${record.totalScore}/${record.totalQuestions}</div></div><div class="btn-action-group"><button class="btn-view-solution" onclick="viewPastSolution(${index})">ดูเฉลย</button><button class="btn-download-slip" data-branch="${sanitizeHTML(record.branch)}" data-test="${sanitizeHTML(record.testName)}" data-date="${sanitizeHTML(record.date)}" data-score="${record.totalScore}" data-total="${record.totalQuestions}" data-percent="${record.percent}" data-status="${record.isPass?'ผ่าน':'ไม่ผ่าน'}" data-scoredata="${payload}" onclick="generateSlip(this)">📥 บันทึกผล</button></div></div></div></div>`;
+                        const html = `<div class="history-card"><div class="history-status-bar ${record.isPass?'green':'red'}"></div><div class="history-content"><div class="history-info"><h3>${sanitizeHTML(record.branch)}</h3><div class="history-test-name">Test - ${sanitizeHTML(record.testName)}</div><div class="history-date">${sanitizeHTML(record.date)}</div><div class="target-badge ${record.isPass?'':'fail'}">เป้าหมาย: ${targetPercent}% ขึ้นไป (${isPassText})</div></div><div class="history-action-area"><div class="history-score"><div class="score-circle ${record.isPass?'green':'red'}"><span class="score-percent">${record.percent}%</span></div><div class="score-raw">${record.totalScore}/${record.totalQuestions}</div></div><div class="btn-action-group"><button class="btn-view-solution" onclick="window.viewPastSolution(${index})">ดูเฉลย</button><button class="btn-download-slip" data-branch="${sanitizeHTML(record.branch)}" data-test="${sanitizeHTML(record.testName)}" data-date="${sanitizeHTML(record.date)}" data-score="${record.totalScore}" data-total="${record.totalQuestions}" data-percent="${record.percent}" data-status="${record.isPass?'ผ่าน':'ไม่ผ่าน'}" data-scoredata="${payload}" onclick="window.generateSlip(this)">📥 บันทึกผล</button></div></div></div></div>`;
                         container.insertAdjacentHTML('beforeend', html);
                     }
 
                     if (i < window.examHistoryLog.length) {
                         setTimeout(renderChunk, 50); 
                     } else {
-                        // แทรกปุ่ม Load More อัตโนมัติ (ใส่ Inline Style รักษาโครงสร้างเดิม)
                         if (window.hasMoreHistory && window.examHistoryLog.length >= 20) {
-                            const loadBtn = `<button id="btnLoadMoreHistory" onclick="loadMoreHistory()" style="width: 100%; padding: 16px; background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%); color: #0A192F; border: 2px solid #cbd5e1; border-radius: 20px; font-size: 16px; font-weight: 800; cursor: pointer; font-family: 'Prompt'; transition: all 0.2s; box-shadow: 0 6px 0 #cbd5e1, 0 10px 15px rgba(0,0,0,0.05); margin-top: 10px; display: flex; align-items: center; justify-content: center;">👇 โหลดประวัติเก่าเพิ่มเติม</button>`;
+                            const loadBtn = `<button id="btnLoadMoreHistory" onclick="window.loadMoreHistory()" style="width: 100%; padding: 16px; background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%); color: #0A192F; border: 2px solid #cbd5e1; border-radius: 20px; font-size: 16px; font-weight: 800; cursor: pointer; font-family: 'Prompt'; transition: all 0.2s; box-shadow: 0 6px 0 #cbd5e1, 0 10px 15px rgba(0,0,0,0.05); margin-top: 10px; display: flex; align-items: center; justify-content: center;">👇 โหลดประวัติเก่าเพิ่มเติม</button>`;
                             container.insertAdjacentHTML('beforeend', loadBtn);
-                            
-                            const btnEl = document.getElementById('btnLoadMoreHistory');
-                            if (btnEl) {
-                                btnEl.onmousedown = function() { this.style.transform = 'translateY(6px)'; this.style.boxShadow = '0 0 0 #cbd5e1, 0 2px 5px rgba(0,0,0,0.05)'; };
-                                btnEl.onmouseup = function() { this.style.transform = ''; this.style.boxShadow = '0 6px 0 #cbd5e1, 0 10px 15px rgba(0,0,0,0.05)'; };
-                            }
-                        } else if (!window.hasMoreHistory && window.examHistoryLog.length > 0) {
-                            container.insertAdjacentHTML('beforeend', `<div style="text-align: center; color: var(--text-muted); padding: 25px 0; font-weight: 700; font-size: 14px;">--- แสดงประวัติทั้งหมดแล้ว ---</div>`);
                         }
                     }
                 }
-                
                 renderChunk();
             };
 
-            function showHistory() { 
-                document.getElementById('examInterface').style.display = 'none'; 
-                document.getElementById('testSelectionMenu').style.display = 'none'; 
-                document.getElementById('mainMenu').style.display = 'none'; 
-                document.getElementById('topNav').style.display = 'flex'; 
-                document.getElementById('historyInterface').style.display = 'flex'; 
-                document.getElementById('btnHistoryNav').style.display = 'none'; 
-                
-                if (typeof window.renderHistoryList === 'function') {
-                    window.renderHistoryList();
-                }
-            }
-            
-            function backToMainMenuFromHistory() { document.getElementById('historyInterface').style.display = 'none'; document.getElementById('mainMenu').style.display = 'flex'; document.getElementById('btnHistoryNav').style.display = 'flex'; }
-            
-            function generateSlip(btn) {
-                document.getElementById('slipUser').innerText = window.currentUserEmail || "ผู้ใช้งาน"; document.getElementById('slipDate').innerText = btn.dataset.date; document.getElementById('slipBranch').innerText = btn.dataset.branch; document.getElementById('slipTestName').innerText = btn.dataset.test; document.getElementById('slipTotalScore').innerText = `${btn.dataset.score}/${btn.dataset.total}`; 
-                const isPass = btn.dataset.status === 'ผ่าน'; const statusColor = isPass ? '#059669' : '#b91c1c'; const slipPercent = document.getElementById('slipPercent'); slipPercent.innerText = btn.dataset.percent + "%"; slipPercent.style.color = statusColor; const slipStatus = document.getElementById('slipStatus'); slipStatus.innerText = btn.dataset.status; slipStatus.style.color = statusColor;
-                const payload = JSON.parse(decodeURIComponent(btn.dataset.scoredata)); const headerRow = document.getElementById('slipHeaderRow'); const dataRow = document.getElementById('slipDataRow'); headerRow.innerHTML = ''; dataRow.innerHTML = '';
-                payload.syllabus.forEach(sub => { headerRow.insertAdjacentHTML('beforeend', `<th style="padding: 10px; border: 2px solid #cbd5e1; font-size: 13px;">${sanitizeHTML(sub.name)}<br>(${sub.count})</th>`); dataRow.insertAdjacentHTML('beforeend', `<td style="padding: 15px; border: 2px solid #cbd5e1; font-weight: bold; font-size: 18px;">${payload.scores[sub.name]}</td>`); });
-                html2canvas(document.getElementById('slipBox')).then(canvas => { document.getElementById('previewContainer').innerHTML = ''; document.getElementById('previewContainer').appendChild(canvas); document.getElementById('previewModal').style.display = 'flex'; setTimeout(()=>document.getElementById('previewModal').classList.add('show'),10); document.getElementById('btnDownloadConfirm').onclick = () => { const l = document.createElement('a'); l.download = 'Exam_Result.png'; l.href = canvas.toDataURL(); l.click(); window.showToast("ดาวน์โหลดสำเร็จ", "success");}; });
-            }
-
-            function exitReviewMode() { document.getElementById('examInterface').style.display = 'none'; document.getElementById('topNav').style.display = 'flex'; document.getElementById('historyInterface').style.display = 'flex'; document.getElementById('btnHistoryNav').style.display = 'none'; document.getElementById('examArea').classList.remove('review-mode'); document.getElementById('smartGrid').classList.remove('review-mode-grid'); }
-
             window.viewPastSolution = function(index) {
-                reviewRecord = window.examHistoryLog[index]; isReviewMode = true; currentQIndex = 0; document.getElementById('historyInterface').style.display = 'none'; document.getElementById('topNav').style.display = 'none'; document.getElementById('examInterface').style.display = 'flex'; document.getElementById('examArea').classList.add('review-mode'); document.getElementById('smartGrid').classList.add('review-mode-grid'); document.getElementById('submitArea').style.display = 'none'; document.getElementById('timerArea').style.display = 'none'; document.getElementById('reviewArea').style.display = 'flex'; document.getElementById('btnExamBack').style.display = 'none'; document.getElementById('btnReviewBack').style.display = 'block'; document.getElementById('reviewModeBadge').style.display = 'flex'; document.getElementById('displayBranchName').innerText = `${reviewRecord.branch} (${reviewRecord.testName})`; document.getElementById('qControls').style.display = 'flex'; renderSidebarSyllabus(reviewRecord.branch); buildSmartGrid();
-                reviewRecord.questions.forEach((q, i) => { const uAns = reviewRecord.userChoices[i]; const cor = getNormalizedAnswer(q.correctAnswer); const cell = document.getElementById(`grid-circle-${i}`); if(!uAns) cell.classList.add('review-incorrect'); else if(uAns === cor) cell.classList.add('review-correct'); else cell.classList.add('review-incorrect'); }); renderSingleQuestion(currentQIndex);
+                reviewRecord = window.examHistoryLog[index];
+                isReviewMode = true;
+                document.getElementById('historyInterface').style.display = 'none';
+                document.getElementById('examInterface').style.display = 'flex';
+                document.getElementById('topNav').style.display = 'none';
+                document.getElementById('btnExamBack').style.display = 'none';
+                document.getElementById('btnReviewBack').style.display = 'block';
+                document.getElementById('reviewModeBadge').style.display = 'flex';
+                document.getElementById('timerArea').style.display = 'none';
+                document.getElementById('reviewArea').style.display = 'flex';
+                document.getElementById('submitArea').style.display = 'none';
+                document.getElementById('qControls').style.display = 'flex';
+                document.getElementById('btnMark').style.display = 'none';
+                document.getElementById('examArea').classList.add('review-mode');
+                document.getElementById('smartGrid').classList.add('review-mode-grid');
+
+                document.getElementById('displayBranchName').innerText = `${reviewRecord.branch} (${reviewRecord.testName})`;
+                renderSidebarSyllabus(reviewRecord.branch);
+                buildSmartGrid();
+
+                reviewRecord.questions.forEach((q, i) => {
+                    const cell = document.getElementById(`grid-circle-${i}`);
+                    if (cell) {
+                        let userAns = reviewRecord.userChoices[i];
+                        let corAns = getNormalizedAnswer(q.correctAnswer);
+                        if (userAns === corAns) cell.classList.add('review-correct');
+                        else cell.classList.add('review-incorrect');
+                    }
+                });
+                
+                window.jumpToQuestion(0);
             };
 
-            function closePreview() { document.getElementById('previewModal').classList.remove('show'); setTimeout(()=>document.getElementById('previewModal').style.display='none',150); }
+            window.exitReviewMode = function() {
+                isReviewMode = false;
+                reviewRecord = null;
+                document.getElementById('examInterface').style.display = 'none';
+                document.getElementById('historyInterface').style.display = 'flex';
+                document.getElementById('topNav').style.display = 'flex';
+                purgeEntireExamState();
+            };
 
-            // ระบบป้องกันการก๊อปปี้ (Anti-Copy)
-            document.addEventListener('contextmenu', event => event.preventDefault());
-            document.addEventListener('keydown', (e) => {
-                if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'C')) {
-                    e.preventDefault();
-                    window.showToast("ไม่อนุญาตให้คัดลอกข้อสอบครับ", "warning");
-                }
-            });
-
-            window.showTestSelection = showTestSelection; window.backToMainMenuFromSelection = backToMainMenuFromSelection; window.enterExam = enterExam; window.promptBackToMenu = promptBackToMenu; window.promptResetExam = promptResetExam; window.promptSubmitExam = promptSubmitExam; window.showHistory = showHistory; window.backToMainMenuFromHistory = backToMainMenuFromHistory; window.generateSlip = generateSlip; window.exitReviewMode = exitReviewMode; window.closePreview = closePreview; window.toggleMarkCurrentQ = toggleMarkCurrentQ; window.navPrevQ = navPrevQ; window.navNextQ = navNextQ; window.jumpToQuestion = jumpToQuestion; window.selectAnswer = selectAnswer;
-        })();
-    </script>
-
-    <div id="refreshOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(248, 250, 252, 0.85); backdrop-filter: blur(10px); z-index: 9999999; flex-direction: column; align-items: center; justify-content: center;">
-        <div class="spinner" style="border-top-color: #0A192F; border-color: rgba(10, 25, 47, 0.1); width: 60px; height: 60px; border-width: 6px;"></div>
-        <h2 style="color: #0A192F; margin-top: 20px; font-weight: 900; font-family: 'Prompt';">กำลังรีเฟรชระบบ...</h2>
-    </div>
-
-    <script>
-        window.addEventListener('keydown', function(e) {
-            // เช็คว่ากด F5 หรือ Ctrl+R / Cmd+R
-            if (e.key === 'F5' || (e.ctrlKey && e.key.toLowerCase() === 'r') || (e.metaKey && e.key.toLowerCase() === 'r')) {
+            window.generateSlip = function(btnElement) {
+                const branch = btnElement.getAttribute('data-branch');
+                const test = btnElement.getAttribute('data-test');
+                const date = btnElement.getAttribute('data-date');
+                const score = btnElement.getAttribute('data-score');
+                const total = btnElement.getAttribute('data-total');
+                const percent = btnElement.getAttribute('data-percent');
+                const status = btnElement.getAttribute('data-status');
+                const payloadStr = btnElement.getAttribute('data-scoredata');
                 
-                // ถ้าระบบหลักกำลังแสดงอยู่ (ไม่ได้อยู่หน้าล็อกอิน)
-                if (document.getElementById('appContent').style.display === 'flex') {
-                    e.preventDefault(); // ยกเลิกการรีเฟรชแบบหน้าจอขาวของเบราว์เซอร์
-                    
-                    // แสดงหน้าจอหมุนโหลดของเราแทน
-                    document.getElementById('refreshOverlay').style.display = 'flex';
-                    
-                    // หน่วงเวลาให้เห็นการหมุน 0.5 วินาที แล้วสั่งรีโหลดระบบอย่างนุ่มนวล
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
+                let scoreData = { syllabus: [], scores: {} };
+                if (payloadStr) {
+                    try { scoreData = JSON.parse(decodeURIComponent(payloadStr)); } catch(e) {}
                 }
-                // กรณีอยู่หน้า Login จะปล่อยให้ F5 ทำงานตามปกติ เพราะเราแก้ UI ให้ล็อกอินนิ่งสนิทแล้ว
-            }
-        });
-    </script>
 
-    <script>
-        // ป้องกันการใช้ 2 นิ้วถ่างเพื่อซูม (Pinch to zoom)
-        document.addEventListener('touchmove', function (event) {
-            if (event.scale !== 1) { 
-                event.preventDefault(); 
-            }
-        }, { passive: false });
+                document.getElementById('slipUser').innerText = window.currentUserEmail || 'User';
+                document.getElementById('slipDate').innerText = date;
+                document.getElementById('slipBranch').innerText = branch;
+                document.getElementById('slipTestName').innerText = `Test - ${test}`;
+                document.getElementById('slipTotalScore').innerText = score;
+                document.getElementById('slipPercent').innerText = `${percent}%`;
+                
+                const statusElem = document.getElementById('slipStatus');
+                statusElem.innerText = status;
+                statusElem.style.color = status === 'ผ่าน' ? '#166534' : '#991b1b';
 
-        // ป้องกันการแตะหน้าจอ 2 ครั้งติดกันเพื่อซูม (Double Tap to Zoom)
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function (event) {
-            let now = (new Date()).getTime();
-            if (now - lastTouchEnd <= 300) {
-                event.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, false);
+                const thead = document.getElementById('slipHeaderRow');
+                const tbody = document.getElementById('slipDataRow');
+                thead.innerHTML = ''; tbody.innerHTML = '';
+                
+                if (scoreData.syllabus && scoreData.syllabus.length > 0) {
+                    scoreData.syllabus.forEach(s => {
+                        thead.insertAdjacentHTML('beforeend', `<th style="padding: 10px; border: 1px solid #cbd5e1;">${s.name}</th>`);
+                        let sScore = scoreData.scores[s.name] || 0;
+                        tbody.insertAdjacentHTML('beforeend', `<td style="padding: 10px; border: 1px solid #cbd5e1; background: white; color: #0A192F; font-weight: bold;">${sScore}/${s.count}</td>`);
+                    });
+                }
+
+                const slipContainer = document.getElementById('slipContainer');
+                const previewContainer = document.getElementById('previewContainer');
+                previewContainer.innerHTML = '<div style="text-align:center; padding:20px;">กำลังสร้างรูปภาพ...</div>';
+                
+                document.getElementById('previewModal').style.display = 'flex';
+                setTimeout(() => { document.getElementById('previewModal').classList.add('show'); }, 10);
+
+                slipContainer.style.opacity = '1';
+                setTimeout(() => {
+                    html2canvas(document.getElementById('slipBox'), { scale: 2, backgroundColor: '#ffffff' }).then(canvas => {
+                        slipContainer.style.opacity = '0';
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(canvas);
+                        document.getElementById('btnDownloadConfirm').onclick = function() {
+                            const link = document.createElement('a');
+                            link.download = `PoliceTest_Result_${Date.now()}.png`;
+                            link.href = canvas.toDataURL('image/png');
+                            link.click();
+                            window.showToast("ดาวน์โหลดรูปภาพสำเร็จ", "success");
+                        };
+                    });
+                }, 500);
+            };
+
+            window.closePreview = function() {
+                document.getElementById('previewModal').classList.remove('show');
+                setTimeout(() => { document.getElementById('previewModal').style.display = 'none'; }, 150);
+            };
+
+            window.showHistory = function() {
+                document.getElementById('mainMenu').style.display = 'none';
+                document.getElementById('testSelectionMenu').style.display = 'none';
+                document.getElementById('historyInterface').style.display = 'flex';
+                document.getElementById('btnHistoryNav').style.display = 'none';
+                window.renderHistoryList();
+            };
+
+            window.backToMainMenuFromHistory = function() {
+                document.getElementById('historyInterface').style.display = 'none';
+                document.getElementById('mainMenu').style.display = 'flex';
+                document.getElementById('btnHistoryNav').style.display = 'flex';
+            };
+
+        })();
     </script>
 </body>
 </html>
